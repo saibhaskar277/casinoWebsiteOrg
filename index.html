@@ -104,7 +104,7 @@ body.is-ready .boot-loader{
 body.is-ready .stage{
   opacity:1;
   visibility:visible;
-  transition:opacity .55s ease, width .38s cubic-bezier(.22,.9,.32,1);
+  transition:opacity .55s ease;
 }
 
 .stage{
@@ -113,7 +113,6 @@ body.is-ready .stage{
   height:100vh;
   overflow:hidden;
   background:linear-gradient(180deg, #6ec8ff 0%, #b8e8ff 45%, #ffe49e 62%, #17adc2 68%, #0c7f98 100%);
-  transition:width .38s cubic-bezier(.22,.9,.32,1);
 }
 
 #island-canvas{
@@ -345,7 +344,7 @@ body.is-ready .stage{
 /* ---------- SLIDE PANEL ---------- */
 .overlay{
   position:fixed; inset:0;
-  background:rgba(14,47,66,.35);
+  background:rgba(14,47,66,.42);
   backdrop-filter:blur(2px);
   opacity:0; pointer-events:none;
   transition:opacity .38s cubic-bezier(.22,.9,.32,1);
@@ -570,26 +569,9 @@ body.is-ready .stage{
   .hotspot .tag{ font-size:10.5px; padding:5px 9px; max-width:92px;}
   .footer-tag{ font-size:11px; bottom:8px;}
   body{ --panel-width:100vw; }
-  /* Full-bleed panel already covers the stage — skip dim fade. */
+  /* Full-bleed panel covers the stage — keep a light dim behind it. */
   .overlay{
-    background:transparent;
-    backdrop-filter:none;
-    transition:none;
-  }
-}
-
-@media(min-width:761px){
-  /* Desktop: never dim/blur the island — that caused a visible fade on open/close. */
-  .overlay{
-    background:transparent;
-    backdrop-filter:none;
-    transition:none;
-  }
-  body.panel-open .stage{
-    width:calc(100vw - var(--panel-width));
-  }
-  body.panel-open .overlay{
-    right:var(--panel-width);
+    background:rgba(14,47,66,.28);
   }
 }
 
