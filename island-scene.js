@@ -32,6 +32,9 @@
       { file: '_0005_palm-tree-branch_03-left.png', x: 0, y: 0, w: 592, h: 321, id: 'palmL' },
       { file: '_0004_palm-branch-02-right.png', x: 772, y: 0, w: 425, h: 210, id: 'palmR2' },
       { file: '_0003_palm-branch-01-right.png', x: 1080, y: 57, w: 120, h: 181, id: 'palmR1' },
+    ],
+    // Corner foliage — reference-matched coords; drawn after vignette shadow.
+    overlays: [
       { file: '_0002_overlay-left.png', x: 0, y: 673, w: 327, h: 407, id: 'overlayL' },
       { file: '_0001_overlay_right.png', x: 718, y: 402, w: 482, h: 678, id: 'overlayR' },
     ],
@@ -261,6 +264,65 @@
     return mat;
   }
 
+  /**
+   * Corner foliage: sway only the leafy upper half on the outer side.
+   * Rocks/sand (bottom ~50%) stay still. Motion is biased inward so the
+   * hard-cropped PNG edge doesn't swing into view.
+   * @param {number} side -1 = left overlay, +1 = right overlay
+   */
+  function makeOverlayFoliageMaterial(tex, side) {
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false,
+    });
+    mat.userData.uTime = { value: 0 };
+    mat.userData.uReduced = { value: reducedMotion ? 1 : 0 };
+    mat.userData.uSide = { value: side < 0 ? 0 : 1 };
+
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = mat.userData.uTime;
+      shader.uniforms.uReduced = mat.userData.uReduced;
+      shader.uniforms.uSide = mat.userData.uSide;
+      mat.userData.shader = shader;
+
+      shader.vertexShader =
+        `
+        uniform float uTime;
+        uniform float uReduced;
+        uniform float uSide;
+        ` + shader.vertexShader;
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+        #include <begin_vertex>
+        {
+          float t = uTime * (1.0 - uReduced);
+          // v=0 bottom (rocks), v=1 top (leaves) — only animate above ~50%.
+          float leafH = smoothstep(0.48, 0.78, uv.y);
+          // Left: outer leaves on low u; right: outer leaves on high u.
+          float leafS = uSide < 0.5
+            ? (1.0 - smoothstep(0.15, 0.62, uv.x))
+            : smoothstep(0.38, 0.85, uv.x);
+          float amp = leafH * leafS;
+          // ~20% stronger than the old whole-mesh rotation (~0.007–0.008).
+          float wave = sin(t * 1.35 + uv.y * 5.5 + uSide * 1.7) * 0.0024;
+          float tip = cos(t * 1.05 + uv.y * 3.2) * 0.00108;
+          // Always bias displacement toward scene center so the cut edge stays off-frame.
+          float inward = uSide < 0.5 ? 1.0 : -1.0;
+          transformed.x += wave * amp * inward;
+          transformed.y += tip * amp;
+        }
+        `
+      );
+    };
+    mat.customProgramCacheKey = () => 'island-overlay-leaf-sway-v3-' + (side < 0 ? 'L' : 'R');
+    return mat;
+  }
+
   function particleTex() {
     const c = document.createElement('canvas');
     c.width = c.height = 64;
@@ -435,8 +497,10 @@
 
     clock = new THREE.Clock();
     scene = new THREE.Scene();
-    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 20);
-    camera.position.z = 10;
+    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+    // Layers use ascending z; keep the camera well past the front-most plane
+    // so added props (waves/overlays) never end up behind the camera.
+    camera.position.z = 40;
 
     renderer = new THREE.WebGLRenderer({
       canvas,
@@ -457,6 +521,7 @@
       LAYOUT.water.file,
       LAYOUT.shadow.file,
       ...LAYOUT.props.map((p) => p.file),
+      ...LAYOUT.overlays.map((p) => p.file),
     ];
     const texMap = {};
     let loadedCount = 0;
@@ -485,16 +550,30 @@
     waterMat = makeWaterMaterial(texMap[LAYOUT.water.file]);
     artRoot.add(makePlane(texMap[LAYOUT.water.file], LAYOUT.water, z++, waterMat));
 
-    // Framing fronds/foliage: pivot from their off-screen corner and bleed past
-    // the edge so the cropped PNG boundary never swings into view.
-    // sx/sy: which corner is the anchor (-1 left/bottom, +1 right/top in local space).
+    // Framing layers: pivot from an outer corner so grow bleeds into the scene.
+    // sx/sy: -1 left/bottom, +1 right/top. Negative margin pulls the pivot on-screen.
     const FRAME_ANCHORS = {
       palmL: { sx: -1, sy: 1, grow: 1.1, margin: 0.05 },
       palmR2: { sx: 1, sy: 1, grow: 1.1, margin: 0.05 },
       palmR1: { sx: 1, sy: 1, grow: 1.12, margin: 0.06 },
-      overlayL: { sx: -1, sy: -1, grow: 1.08, margin: 0.04 },
-      overlayR: { sx: 1, sy: -1, grow: 1.08, margin: 0.04 },
+      // Slight overscan so the hard-cropped leaf edge stays off-screen while leaves sway.
+      overlayL: { sx: -1, sy: -1, grow: 1.12, margin: 0.035 },
+      overlayR: { sx: 1, sy: -1, grow: 1.12, margin: 0.035 },
     };
+
+    function applyFrameAnchor(mesh, p, anchor) {
+      const loc = pxToLocal(p.x, p.y, p.w, p.h);
+      const hw = loc.w / 2;
+      const hh = loc.h / 2;
+      mesh.geometry.translate(-anchor.sx * hw, -anchor.sy * hh, 0);
+      mesh.position.set(
+        loc.x + anchor.sx * hw + anchor.sx * anchor.margin,
+        loc.y + anchor.sy * hh + anchor.sy * anchor.margin,
+        mesh.position.z
+      );
+      mesh.scale.set(anchor.grow, anchor.grow, 1);
+      mesh.userData.anchored = true;
+    }
 
     LAYOUT.props.forEach((p) => {
       let mat;
@@ -507,20 +586,7 @@
       mesh.userData.id = p.id;
 
       const anchor = FRAME_ANCHORS[p.id];
-      if (anchor) {
-        const loc = pxToLocal(p.x, p.y, p.w, p.h);
-        const hw = loc.w / 2;
-        const hh = loc.h / 2;
-        // Move the chosen corner to the mesh's local origin so rotation pivots there.
-        mesh.geometry.translate(-anchor.sx * hw, -anchor.sy * hh, 0);
-        mesh.position.set(
-          loc.x + anchor.sx * hw + anchor.sx * anchor.margin,
-          loc.y + anchor.sy * hh + anchor.sy * anchor.margin,
-          mesh.position.z
-        );
-        mesh.scale.set(anchor.grow, anchor.grow, 1);
-        mesh.userData.anchored = true;
-      }
+      if (anchor) applyFrameAnchor(mesh, p, anchor);
 
       mesh.userData.basePos = mesh.position.clone();
       artRoot.add(mesh);
@@ -563,6 +629,38 @@
     }
 
     artRoot.add(makePlane(texMap[LAYOUT.shadow.file], LAYOUT.shadow, z++));
+
+    // Corner foliage in front of vignette (must stay below camera.z).
+    // Leaf sway is vertex-warped (upper/outer only); rocks stay planted.
+    LAYOUT.overlays.forEach((p, i) => {
+      const side = p.id === 'overlayL' ? -1 : 1;
+      const mat = makeOverlayFoliageMaterial(texMap[p.file], side);
+      const loc = pxToLocal(p.x, p.y, p.w, p.h);
+      const anchor = FRAME_ANCHORS[p.id];
+      const geo = new THREE.PlaneGeometry(loc.w, loc.h, 24, 32);
+      if (anchor) {
+        geo.translate(-anchor.sx * (loc.w / 2), -anchor.sy * (loc.h / 2), 0);
+      }
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(loc.x, loc.y, z++);
+      mesh.userData.id = p.id;
+      mesh.renderOrder = 1000 + i;
+      if (anchor) {
+        const hw = loc.w / 2;
+        const hh = loc.h / 2;
+        mesh.position.set(
+          loc.x + anchor.sx * hw + anchor.sx * anchor.margin,
+          loc.y + anchor.sy * hh + anchor.sy * anchor.margin,
+          mesh.position.z
+        );
+        mesh.scale.set(anchor.grow, anchor.grow, 1);
+        mesh.userData.anchored = true;
+      }
+      mesh.userData.basePos = mesh.position.clone();
+      mesh.userData.foliageMat = mat;
+      artRoot.add(mesh);
+      propMeshes[p.id] = mesh;
+    });
 
     // Waterfall mist near mountain face
     if (mountainMesh) {
@@ -778,12 +876,11 @@
         // Gentle wind sway pivoting from the anchored off-screen corner.
         p.rotation.z = Math.sin(t * 0.7 + i * 1.3) * 0.012;
       });
-      if (propMeshes.overlayL) {
-        propMeshes.overlayL.rotation.z = Math.sin(t * 0.65) * 0.007;
-      }
-      if (propMeshes.overlayR) {
-        propMeshes.overlayR.rotation.z = Math.sin(t * 0.6 + 0.5) * 0.008;
-      }
+      // Overlay leaf sway is driven in the foliage vertex shader (rocks stay fixed).
+      ['overlayL', 'overlayR'].forEach((id) => {
+        const m = propMeshes[id];
+        if (m && m.userData.foliageMat) m.userData.foliageMat.userData.uTime.value = t;
+      });
 
       seagulls.forEach((bird) => {
         const p = bird.userData.path;
