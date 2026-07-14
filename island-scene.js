@@ -403,28 +403,28 @@
           float lap = mix(wash, wash2, 0.45);
 
           vec2 distort = vec2(
-            (n1 - 0.5) * 0.01925 + sin(uv.y * 28.0 + t * 1.6 + n1 * 4.0) * 0.00825 + (n3 - 0.5) * 0.006,
-            (lap - 0.5) * 0.0275 + (n2 - 0.5) * 0.01375 + sin(t * 1.3 + uv.x * 6.0) * 0.0069 + (n3 - 0.5) * 0.0045
+            (n1 - 0.5) * 0.025 + sin(uv.y * 28.0 + t * 1.6 + n1 * 4.0) * 0.0107 + (n3 - 0.5) * 0.0078,
+            (lap - 0.5) * 0.0358 + (n2 - 0.5) * 0.0179 + sin(t * 1.3 + uv.x * 6.0) * 0.009 + (n3 - 0.5) * 0.0059
           ) * zone;
 
           // Soft dual-phase scroll in the active zone so texture clearly drifts.
           float scroll = fract(t * 0.32);
           float scrollB = fract(t * 0.32 + 0.5);
-          vec2 flowA = distort + vec2((n3 - 0.5) * 0.0055, -scroll * 0.055) * zone;
-          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0041, -scrollB * 0.055) * zone;
+          vec2 flowA = distort + vec2((n3 - 0.5) * 0.0072, -scroll * 0.0715) * zone;
+          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0053, -scrollB * 0.0715) * zone;
           float blend = abs(scroll * 2.0 - 1.0);
           vec2 sampleUv = clamp(mix(uv + flowA, uv + flowB, blend), vec2(0.01, 0.0), vec2(0.99, 1.0));
 
           vec4 sampledDiffuseColor = texture2D(map, sampleUv);
           // Gentle streak (no gloss bands) so the foam also feels alive.
           float streak = mix(n1, n2, 0.5);
-          sampledDiffuseColor.rgb *= 1.0 + (streak - 0.5) * 0.3 * zone;
+          sampledDiffuseColor.rgb *= 1.0 + (streak - 0.5) * 0.39 * zone;
           diffuseColor *= sampledDiffuseColor;
         #endif
         `
       );
     };
-    mat.customProgramCacheKey = () => 'island-waterfall-pool-v4';
+    mat.customProgramCacheKey = () => 'island-waterfall-pool-v5';
     return mat;
   }
 
