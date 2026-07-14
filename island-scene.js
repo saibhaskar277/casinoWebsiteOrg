@@ -352,8 +352,8 @@
   }
 
   /**
-   * Pool / landing spray — soft beach-like UV wash (same idea as the ocean shore,
-   * lower amplitude) so it reads as water settling after the fall hits.
+   * Pool / landing spray (waterfall-02) — stronger bottom wash + soft flow
+   * so the sheet clearly moves where water settles.
    */
   function makeWaterfallPoolMaterial(srcTex) {
     const mat = new THREE.MeshBasicMaterial({
@@ -390,26 +390,41 @@
         #ifdef USE_MAP
           vec2 uv = vMapUv;
           float t = uTime * (1.0 - uReduced);
-          // Stronger toward the lower half where water lands and washes out.
-          float impact = 1.0 - smoothstep(0.15, 0.75, uv.y);
-          float n1 = poolNoise(uv * vec2(18.0, 10.0) + vec2(t * 0.22, -t * 0.12));
-          float n2 = poolNoise(uv * vec2(36.0, 16.0) - vec2(t * 0.16, t * 0.28));
-          float wash = sin(uv.x * 4.2 + t * 0.75 + n1 * 2.0) * 0.5 + 0.5;
-          float wash2 = sin(uv.x * 7.5 - t * 0.5 + n2 * 3.0) * 0.5 + 0.5;
-          float lap = mix(wash, wash2, 0.4);
-          float grain = (n1 - 0.5) * 0.0035 + (n2 - 0.5) * 0.0018;
-          // ~half the beach shore amplitude — same feel, quieter.
+          // Bottom-weighted motion (strongest near the landing edge).
+          float bottom = 1.0 - smoothstep(0.0, 0.55, uv.y);
+          float mid = smoothstep(0.15, 0.4, uv.y) * (1.0 - smoothstep(0.55, 0.85, uv.y));
+          float zone = max(bottom, mid * 0.65);
+
+          float n1 = poolNoise(uv * vec2(14.0, 8.0) + vec2(t * 0.35, -t * 0.55));
+          float n2 = poolNoise(uv * vec2(28.0, 14.0) - vec2(t * 0.28, t * 0.7));
+          float n3 = poolNoise(uv * vec2(40.0, 18.0) + vec2(-t * 0.4, t * 0.9));
+          float wash = sin(uv.x * 5.0 + t * 1.1 + n1 * 3.0) * 0.5 + 0.5;
+          float wash2 = sin(uv.x * 9.0 - t * 0.85 + n2 * 2.5) * 0.5 + 0.5;
+          float lap = mix(wash, wash2, 0.45);
+
           vec2 distort = vec2(
-            sin(uv.y * 32.0 + t * 0.85 + n1 * 3.5) * impact * 0.0045 + grain * impact * 1.2,
-            (lap - 0.5) * impact * 0.012 + grain * 0.5 + sin(t * 0.9 + uv.x * 5.0) * impact * 0.0035
-          );
-          vec4 sampledDiffuseColor = texture2D(map, clamp(uv + distort, 0.0, 1.0));
+            (n1 - 0.5) * 0.01925 + sin(uv.y * 28.0 + t * 1.6 + n1 * 4.0) * 0.00825 + (n3 - 0.5) * 0.006,
+            (lap - 0.5) * 0.0275 + (n2 - 0.5) * 0.01375 + sin(t * 1.3 + uv.x * 6.0) * 0.0069 + (n3 - 0.5) * 0.0045
+          ) * zone;
+
+          // Soft dual-phase scroll in the active zone so texture clearly drifts.
+          float scroll = fract(t * 0.32);
+          float scrollB = fract(t * 0.32 + 0.5);
+          vec2 flowA = distort + vec2((n3 - 0.5) * 0.0055, -scroll * 0.055) * zone;
+          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0041, -scrollB * 0.055) * zone;
+          float blend = abs(scroll * 2.0 - 1.0);
+          vec2 sampleUv = clamp(mix(uv + flowA, uv + flowB, blend), vec2(0.01, 0.0), vec2(0.99, 1.0));
+
+          vec4 sampledDiffuseColor = texture2D(map, sampleUv);
+          // Gentle streak (no gloss bands) so the foam also feels alive.
+          float streak = mix(n1, n2, 0.5);
+          sampledDiffuseColor.rgb *= 1.0 + (streak - 0.5) * 0.3 * zone;
           diffuseColor *= sampledDiffuseColor;
         #endif
         `
       );
     };
-    mat.customProgramCacheKey = () => 'island-waterfall-pool-v1';
+    mat.customProgramCacheKey = () => 'island-waterfall-pool-v4';
     return mat;
   }
 
