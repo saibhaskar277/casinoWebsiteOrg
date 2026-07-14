@@ -16,7 +16,7 @@
   /** Pixel layout from template-match against web page ref.jpg */
   const LAYOUT = {
     bg: { file: '_0015_Layer-7.png', x: 0, y: 0, w: 1200, h: 1080 },
-    clouds: { file: '_0014_Layer-8.png', x: 0, y: 58, w: 1200, h: 346 },
+    clouds: { file: '_0014_Layer-8.png', x: 0, y: 88, w: 1200, h: 346 },
     water: { file: '_0013_water-Alpha.png', x: 0, y: 402, w: 1200, h: 542 },
     shadow: { file: '_0000_shadow.png', x: 0, y: 0, w: 1200, h: 1080 },
     props: [
@@ -117,175 +117,146 @@
     return mesh;
   }
 
-  const WATER_VERT = /* glsl */ `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `;
+  // UV-warp only — MeshBasicMaterial keeps the PNG colors (no tint / no custom color math).
+  function makeWaterMaterial(tex) {
+    const rippleUniforms = [];
+    for (let i = 0; i < MAX_RIPPLES; i++) rippleUniforms.push(new THREE.Vector4(0, 0, -10, 0));
 
-  const WATER_FRAG = /* glsl */ `
-    precision highp float;
-    uniform sampler2D uMap;
-    uniform float uTime;
-    uniform float uReduced;
-    uniform vec2 uMouse;
-    uniform vec4 uRipples[${MAX_RIPPLES}];
-    varying vec2 vUv;
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    mat.userData.uTime = { value: 0 };
+    mat.userData.uReduced = { value: reducedMotion ? 1 : 0 };
+    mat.userData.uMouse = { value: new THREE.Vector2(0.5, 0.5) };
+    mat.userData.uRipples = { value: rippleUniforms };
 
-    float hash(vec2 p) {
-      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-    }
-    float noise(vec2 p) {
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      float a = hash(i);
-      float b = hash(i + vec2(1.0, 0.0));
-      float c = hash(i + vec2(0.0, 1.0));
-      float d = hash(i + vec2(1.0, 1.0));
-      vec2 u = f * f * (3.0 - 2.0 * f);
-      return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-    }
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = mat.userData.uTime;
+      shader.uniforms.uReduced = mat.userData.uReduced;
+      shader.uniforms.uMouse = mat.userData.uMouse;
+      shader.uniforms.uRipples = mat.userData.uRipples;
+      mat.userData.shader = shader;
 
-    void main() {
-      vec2 uv = vUv;
-      float t = uTime * (1.0 - uReduced);
+      shader.fragmentShader =
+        `
+        uniform float uTime;
+        uniform float uReduced;
+        uniform vec2 uMouse;
+        uniform vec4 uRipples[${MAX_RIPPLES}];
+        float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise(vec2 p){
+          vec2 i = floor(p); vec2 f = fract(p);
+          float a = hash(i), b = hash(i + vec2(1.0, 0.0));
+          float c = hash(i + vec2(0.0, 1.0)), d = hash(i + vec2(1.0, 1.0));
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+        ` + shader.fragmentShader;
 
-      // Shore vs open ocean masks (lower UV = beach, higher = deep water).
-      float shore = 1.0 - smoothstep(0.0, 0.42, uv.y);
-      float midShore = smoothstep(0.0, 0.18, uv.y) * (1.0 - smoothstep(0.18, 0.48, uv.y));
-      float ocean = smoothstep(0.28, 0.72, uv.y);
-
-      // Base currents — kept light everywhere.
-      float w1 = noise(uv * 4.0 + vec2(t * 0.025, t * 0.012));
-      float w2 = noise(uv * 9.0 - vec2(t * 0.035, -t * 0.018));
-      float current = sin(uv.y * 20.0 + t * 0.32) * 0.0012;
-      float crossWave = sin(uv.x * 34.0 - t * 0.26) * 0.0007;
-      float depthMotion = mix(0.45, 1.0, smoothstep(0.0, 0.8, uv.y));
-      vec2 distort = vec2(
-        ((w1 - 0.5) * 0.0022 + current) * depthMotion,
-        ((w2 - 0.5) * 0.0017 + crossWave) * depthMotion
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec2 uv = vMapUv;
+          float t = uTime * (1.0 - uReduced);
+          float shore = 1.0 - smoothstep(0.0, 0.42, uv.y);
+          float midShore = smoothstep(0.0, 0.18, uv.y) * (1.0 - smoothstep(0.18, 0.48, uv.y));
+          float ocean = smoothstep(0.28, 0.72, uv.y);
+          float w1 = noise(uv * 4.0 + vec2(t * 0.025, t * 0.012));
+          float w2 = noise(uv * 9.0 - vec2(t * 0.035, -t * 0.018));
+          float depthMotion = mix(0.45, 1.0, smoothstep(0.0, 0.8, uv.y));
+          vec2 distort = vec2(
+            ((w1 - 0.5) * 0.0022 + sin(uv.y * 20.0 + t * 0.32) * 0.0012) * depthMotion,
+            ((w2 - 0.5) * 0.0017 + sin(uv.x * 34.0 - t * 0.26) * 0.0007) * depthMotion
+          );
+          float wash = sin(uv.x * 2.4 + t * 0.55) * 0.5 + 0.5;
+          float wash2 = sin(uv.x * 5.1 - t * 0.38 + w1 * 2.0) * 0.5 + 0.5;
+          float lap = mix(wash, wash2, 0.45);
+          float beachNoise = noise(uv * vec2(28.0, 14.0) + vec2(t * 0.18, -t * 0.09));
+          float beachNoise2 = noise(uv * vec2(52.0, 22.0) - vec2(t * 0.12, t * 0.21));
+          float grain = (beachNoise - 0.5) * 0.0045 + (beachNoise2 - 0.5) * 0.0022;
+          distort += vec2(
+            sin(uv.y * 40.0 + t * 0.7 + beachNoise * 4.0) * shore * 0.0035 + grain * shore * 1.4,
+            (lap - 0.5) * shore * 0.018 + grain * 0.6
+          );
+          distort.x += (beachNoise - 0.5) * midShore * 0.005;
+          distort.y += sin(t * 0.85 + uv.x * 6.0) * midShore * 0.006;
+          float swellA = sin(uv.x * 6.5 + uv.y * 3.2 - t * 0.42);
+          float swellB = sin(uv.x * 3.1 - uv.y * 5.8 + t * 0.28 + w2 * 3.0);
+          float oceanNoise = noise(uv * vec2(3.2, 2.4) + vec2(t * 0.04, t * 0.02));
+          float oceanRipple = noise(uv * vec2(18.0, 10.0) + vec2(-t * 0.08, t * 0.05));
+          distort += vec2(
+            swellA * 0.0025 + swellB * 0.0013 + (oceanNoise - 0.5) * 0.0024,
+            swellB * 0.0022 + (oceanRipple - 0.5) * 0.0014
+          ) * ocean * 0.3;
+          for (int i = 0; i < ${MAX_RIPPLES}; i++) {
+            vec4 r = uRipples[i];
+            if (r.w > 0.001) {
+              float age = t - r.z;
+              if (age >= 0.0 && age <= 2.2) {
+                float dist = distance(uv, r.xy);
+                float radius = age * 0.14;
+                float ring = exp(-pow((dist - radius) * 38.0, 2.0));
+                float fade = (1.0 - age / 2.2) * r.w;
+                distort += normalize(uv - r.xy + 1e-4) * ring * fade * 0.006;
+              }
+            }
+          }
+          vec4 sampledDiffuseColor = texture2D(map, clamp(uv + distort, 0.0, 1.0));
+          diffuseColor *= sampledDiffuseColor;
+        #endif
+        `
       );
+    };
+    mat.customProgramCacheKey = () => 'island-water-uv-only-v1';
+    return mat;
+  }
 
-      // ---- Beach wash (foreground) ----
-      float washPhase = uv.x * 2.4 + t * 0.55;
-      float wash = sin(washPhase) * 0.5 + 0.5;
-      float wash2 = sin(uv.x * 5.1 - t * 0.38 + w1 * 2.0) * 0.5 + 0.5;
-      float lap = mix(wash, wash2, 0.45);
+  function makeWakeMaterial(tex) {
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    mat.userData.uTime = { value: 0 };
+    mat.userData.uReduced = { value: reducedMotion ? 1 : 0 };
+    mat.userData.uSwell = { value: 0 };
 
-      float beachNoise = noise(uv * vec2(28.0, 14.0) + vec2(t * 0.18, -t * 0.09));
-      float beachNoise2 = noise(uv * vec2(52.0, 22.0) - vec2(t * 0.12, t * 0.21));
-      float grain = (beachNoise - 0.5) * 0.0045 + (beachNoise2 - 0.5) * 0.0022;
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = mat.userData.uTime;
+      shader.uniforms.uReduced = mat.userData.uReduced;
+      shader.uniforms.uSwell = mat.userData.uSwell;
+      mat.userData.shader = shader;
 
-      float stretch = (lap - 0.5) * shore * 0.018;
-      float lateral = sin(uv.y * 40.0 + t * 0.7 + beachNoise * 4.0) * shore * 0.0035;
-      distort += vec2(lateral + grain * shore * 1.4, stretch + grain * 0.6);
-      distort.x += (beachNoise - 0.5) * midShore * 0.005;
-      distort.y += sin(t * 0.85 + uv.x * 6.0) * midShore * 0.006;
+      shader.fragmentShader =
+        `
+        uniform float uTime;
+        uniform float uReduced;
+        uniform float uSwell;
+        ` + shader.fragmentShader;
 
-      // ---- Open ocean (different look: long swell + slow drift, ~30% of beach energy) ----
-      float swellA = sin(uv.x * 6.5 + uv.y * 3.2 - t * 0.42);
-      float swellB = sin(uv.x * 3.1 - uv.y * 5.8 + t * 0.28 + w2 * 3.0);
-      float swell = swellA * 0.65 + swellB * 0.35;
-      float oceanNoise = noise(uv * vec2(3.2, 2.4) + vec2(t * 0.04, t * 0.02));
-      float oceanRipple = noise(uv * vec2(18.0, 10.0) + vec2(-t * 0.08, t * 0.05));
-
-      // Broad horizontal swell + faint vertical breathe — not the beach stretch/foam.
-      vec2 oceanDistort = vec2(
-        swell * 0.0038 + (oceanNoise - 0.5) * 0.0024,
-        swellB * 0.0022 + (oceanRipple - 0.5) * 0.0014
-      ) * ocean * 0.3;
-      distort += oceanDistort;
-
-      float rippleSum = 0.0;
-      for (int i = 0; i < ${MAX_RIPPLES}; i++) {
-        vec4 r = uRipples[i];
-        if (r.w <= 0.001) continue;
-        float age = t - r.z;
-        if (age < 0.0 || age > 2.2) continue;
-        float dist = distance(uv, r.xy);
-        float radius = age * 0.14;
-        float ring = exp(-pow((dist - radius) * 38.0, 2.0));
-        float fade = (1.0 - age / 2.2) * r.w;
-        rippleSum += ring * fade;
-        distort += normalize(uv - r.xy + 1e-4) * ring * fade * 0.006;
-      }
-
-      vec2 sampleUv = clamp(uv + distort, 0.0, 1.0);
-      vec4 col = texture2D(uMap, sampleUv);
-
-      // Soft reflection tint toward sky
-      float fresnel = pow(1.0 - sampleUv.y, 1.5) * 0.12;
-      col.rgb = mix(col.rgb, vec3(0.55, 0.82, 1.0), fresnel);
-      col.rgb += vec3(rippleSum * 0.1);
-
-      float glint = pow(max(0.0, noise(sampleUv * 50.0 + t * 0.4) - 0.82), 2.0);
-      col.rgb += vec3(glint) * 0.18;
-
-      // Beach: wet-sand foam / shimmer at the waterline.
-      float foamLine = smoothstep(0.35, 0.85, lap) * midShore;
-      float foamGrain = pow(max(0.0, beachNoise2 - 0.55), 1.6);
-      col.rgb += vec3(0.85, 0.93, 1.0) * (foamLine * 0.07 + foamGrain * shore * 0.05);
-      col.a = min(1.0, col.a + foamLine * 0.04 * col.a);
-
-      // Ocean: soft rolling highlight bands (no foam stretch).
-      float oceanSheen = pow(max(0.0, swell * 0.5 + 0.5 - 0.62), 2.0);
-      float oceanSparkle = pow(max(0.0, oceanRipple - 0.78), 2.5);
-      col.rgb += vec3(0.55, 0.78, 0.95) * oceanSheen * ocean * 0.045;
-      col.rgb += vec3(oceanSparkle) * ocean * 0.06;
-
-      if (col.a < 0.02) discard;
-      gl_FragColor = col;
-    }
-  `;
-
-  // Dedicated shader for the foam/wake beneath the ship so the water there
-  // laps, foams and breathes in sync with the hull.
-  const WAKE_FRAG = /* glsl */ `
-    precision highp float;
-    uniform sampler2D uMap;
-    uniform float uTime;
-    uniform float uReduced;
-    uniform float uSwell;
-    varying vec2 vUv;
-
-    float hash(vec2 p) {
-      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-    }
-    float noise(vec2 p) {
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      float a = hash(i);
-      float b = hash(i + vec2(1.0, 0.0));
-      float c = hash(i + vec2(0.0, 1.0));
-      float d = hash(i + vec2(1.0, 1.0));
-      vec2 u = f * f * (3.0 - 2.0 * f);
-      return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-    }
-
-    void main() {
-      float t = uTime * (1.0 - uReduced);
-      vec2 uv = vUv;
-
-      // Subtle lap: small horizontal sway + faint vertical bob of the foam.
-      float sway = sin(uv.y * 8.0 + t * 1.2) * 0.005;
-      float bob = sin(t * 0.9 + uSwell) * 0.004;
-      vec2 duv = clamp(vec2(uv.x + sway, uv.y + bob), 0.0, 1.0);
-
-      vec4 col = texture2D(uMap, duv);
-
-      // Very light foam shimmer.
-      float foam = pow(max(0.0, noise(uv * vec2(16.0, 8.0) + vec2(t * 0.6, t * 0.3)) - 0.68), 2.0);
-      col.rgb += vec3(foam) * col.a * 0.25;
-
-      // Gentle breathing opacity, kept close to the original texture.
-      col.a *= 0.92 + sin(t * 1.0 + uSwell) * 0.08;
-
-      if (col.a < 0.02) discard;
-      gl_FragColor = col;
-    }
-  `;
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec2 uv = vMapUv;
+          float t = uTime * (1.0 - uReduced);
+          float sway = sin(uv.y * 8.0 + t * 1.2) * 0.005;
+          float bob = sin(t * 0.9 + uSwell) * 0.004;
+          vec4 sampledDiffuseColor = texture2D(map, clamp(vec2(uv.x + sway, uv.y + bob), 0.0, 1.0));
+          sampledDiffuseColor.a *= 0.95 + sin(t * 1.0 + uSwell) * 0.05;
+          diffuseColor *= sampledDiffuseColor;
+        #endif
+        `
+      );
+    };
+    mat.customProgramCacheKey = () => 'island-wake-uv-only-v1';
+    return mat;
+  }
 
   function particleTex() {
     const c = document.createElement('canvas');
@@ -365,8 +336,8 @@
   }
 
   function syncRipples() {
-    if (!waterMat) return;
-    const arr = waterMat.uniforms.uRipples.value;
+    if (!waterMat || !waterMat.userData.uRipples) return;
+    const arr = waterMat.userData.uRipples.value;
     for (let i = 0; i < MAX_RIPPLES; i++) {
       const r = ripples[i];
       if (r) arr[i].set(r.u, r.v, r.t, r.strength);
@@ -508,21 +479,7 @@
     cloudMesh.userData.basePosY = cloudMesh.position.y;
     artRoot.add(cloudMesh);
 
-    const rippleUniforms = [];
-    for (let i = 0; i < MAX_RIPPLES; i++) rippleUniforms.push(new THREE.Vector4(0, 0, -10, 0));
-    waterMat = new THREE.ShaderMaterial({
-      uniforms: {
-        uMap: { value: texMap[LAYOUT.water.file] },
-        uTime: { value: 0 },
-        uReduced: { value: reducedMotion ? 1 : 0 },
-        uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-        uRipples: { value: rippleUniforms },
-      },
-      vertexShader: WATER_VERT,
-      fragmentShader: WATER_FRAG,
-      transparent: true,
-      depthWrite: false,
-    });
+    waterMat = makeWaterMaterial(texMap[LAYOUT.water.file]);
     artRoot.add(makePlane(texMap[LAYOUT.water.file], LAYOUT.water, z++, waterMat));
 
     // Framing fronds/foliage: pivot from their off-screen corner and bleed past
@@ -539,18 +496,7 @@
     LAYOUT.props.forEach((p) => {
       let mat;
       if (p.id === 'wake') {
-        wakeMat = new THREE.ShaderMaterial({
-          uniforms: {
-            uMap: { value: texMap[p.file] },
-            uTime: { value: 0 },
-            uReduced: { value: reducedMotion ? 1 : 0 },
-            uSwell: { value: 0 },
-          },
-          vertexShader: WATER_VERT,
-          fragmentShader: WAKE_FRAG,
-          transparent: true,
-          depthWrite: false,
-        });
+        wakeMat = makeWakeMaterial(texMap[p.file]);
         mat = wakeMat;
       }
       const mesh = makePlane(texMap[p.file], p, z++, mat);
@@ -699,7 +645,7 @@
       if (art.y >= wy && art.y <= wy + wh && waterMat) {
         const u = art.x / ART_W;
         const v = 1 - (art.y - wy) / wh;
-        waterMat.uniforms.uMouse.value.set(u, v);
+        waterMat.userData.uMouse.value.set(u, v);
         const now = performance.now();
         if (!reducedMotion && now - lastRipple > 280) {
           lastRipple = now;
@@ -768,7 +714,7 @@
     const dt = Math.min(clock.getDelta(), 0.05);
 
     if (waterMat) {
-      waterMat.uniforms.uTime.value = t;
+      waterMat.userData.uTime.value = t;
       syncRipples();
     }
 
@@ -806,10 +752,10 @@
           const wb = propMeshes.wake.userData.basePos;
           propMeshes.wake.position.x = wb.x + surge * 0.002;
           propMeshes.wake.position.y = wb.y + heave * 0.0015;
-          if (wakeMat) wakeMat.uniforms.uSwell.value = heave;
+          if (wakeMat) wakeMat.userData.uSwell.value = heave;
         }
       }
-      if (wakeMat) wakeMat.uniforms.uTime.value = t;
+      if (wakeMat) wakeMat.userData.uTime.value = t;
       if (propMeshes.shipFar) {
         const b = propMeshes.shipFar.userData.basePos;
         propMeshes.shipFar.position.y = b.y + Math.sin(t * 0.8 + 1) * 0.004;
