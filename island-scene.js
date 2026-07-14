@@ -21,7 +21,9 @@
     shadow: { file: '_0000_shadow.png', x: 0, y: 0, w: 1200, h: 1080 },
     props: [
       { file: '_0012_ship_02.png', x: 460, y: 387, w: 97, h: 90, id: 'shipFar' },
-      { file: 'mountain.png', x: 652, y: 170, w: 581, h: 396, id: 'mountain' },
+      { file: '_0007_mountain-without-waterfall.png', x: 680, y: 170, w: 515, h: 340, id: 'mountain' },
+      { file: '_0007_waterfall-01.png', x: 858, y: 292, w: 95, h: 194, id: 'waterfall' },
+      { file: '_0007_waterfall-02.png', x: 801, y: 413, w: 117, h: 66, id: 'waterfallSpray' },
       { file: 'mountain-waves.png', x: 652, y: 426, w: 581, h: 140, id: 'mountainWaves' },
       { file: '_0009_Layer-2.png', x: 61, y: 494, w: 310, h: 93, id: 'wake' },
       { file: '_0006_Layer-4.png', x: 397, y: 455, w: 407, h: 226, id: 'village' },
@@ -56,8 +58,9 @@
   let artRoot, view = { scaleX: 1, scaleY: 1, ox: 0, oy: 0 };
   let waterMat, wakeMat, cloudMesh, shipMesh, shipShadow, mountainMesh;
   let waveMats = [];
+  let waterfallMats = [];
   let palmMeshes = [];
-  let mistPoints, seagulls = [];
+  let mistPoints, dropletPoints, splashPoints, seagulls = [];
   let ripples = [];
   let animId = 0;
   let running = true;
@@ -265,6 +268,152 @@
   }
 
   /**
+   * Cascade flow via UV distortion only (no gloss).
+   * Stronger top→bottom warp; clearest texture scroll in the upper ~40%.
+   */
+  function makeWaterfallMaterial(srcTex, opts) {
+    const options = opts || {};
+    const mat = new THREE.MeshBasicMaterial({
+      map: srcTex,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    mat.userData.uTime = { value: 0 };
+    mat.userData.uReduced = { value: reducedMotion ? 1 : 0 };
+    mat.userData.uSpeed = { value: options.speed == null ? 0.85 : options.speed };
+
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = mat.userData.uTime;
+      shader.uniforms.uReduced = mat.userData.uReduced;
+      shader.uniforms.uSpeed = mat.userData.uSpeed;
+      mat.userData.shader = shader;
+
+      shader.fragmentShader =
+        `
+        uniform float uTime;
+        uniform float uReduced;
+        uniform float uSpeed;
+        float wfHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float wfNoise(vec2 p){
+          vec2 i = floor(p); vec2 f = fract(p);
+          float a = wfHash(i), b = wfHash(i + vec2(1.0, 0.0));
+          float c = wfHash(i + vec2(0.0, 1.0)), d = wfHash(i + vec2(1.0, 1.0));
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+        ` + shader.fragmentShader;
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec2 uv = vMapUv;
+          float t = uTime * (1.0 - uReduced);
+          // Mid-band only: ~30% → 70% of the sheet, soft blend at both edges.
+          float midBand = smoothstep(0.28, 0.38, uv.y) * (1.0 - smoothstep(0.62, 0.72, uv.y));
+          // Light fall warp still runs full height so the cascade feels continuous.
+          float fall = 0.25 + 0.75 * midBand;
+
+          float n1 = wfNoise(vec2(uv.x * 6.0, uv.y * 14.0 - t * uSpeed * 2.4));
+          float n2 = wfNoise(vec2(uv.x * 16.0, uv.y * 30.0 - t * uSpeed * 3.6));
+          float n3 = wfNoise(vec2(uv.x * 32.0 + t * 0.2, uv.y * 9.0 - t * uSpeed * 1.5));
+
+          vec2 distort = vec2(
+            (n1 - 0.5) * 0.006 + (n3 - 0.5) * 0.003 + sin(uv.y * 24.0 - t * 2.8) * 0.0018,
+            (n2 - 0.5) * 0.0072 + sin(uv.x * 14.0 + t * 1.6) * 0.0012
+          ) * fall;
+
+          // Downward texture scroll blended only inside the 30–70% band (~40% quieter).
+          float scroll = fract(t * uSpeed * 0.45);
+          float scrollB = fract(t * uSpeed * 0.45 + 0.5);
+          vec2 flowA = distort + vec2(0.0, -scroll * 0.036 * midBand);
+          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0024 * midBand, -scrollB * 0.036 * midBand);
+          float blend = abs(scroll * 2.0 - 1.0);
+          vec2 sampleUv = mix(uv + flowA, uv + flowB, blend);
+          sampleUv = clamp(sampleUv, vec2(0.02, 0.0), vec2(0.98, 1.0));
+
+          vec4 sampledDiffuseColor = texture2D(map, sampleUv);
+
+          // Soft flowing streaks (the earlier waterfall feel) — no hard highlight bands / foam gloss.
+          float fine = wfNoise(vec2(uv.x * 26.0, uv.y * 8.0 + t * uSpeed * 2.6));
+          float coarse = wfNoise(vec2(uv.x * 12.0, uv.y * 4.5 + t * uSpeed * 1.5));
+          float streak = mix(coarse, fine, 0.55);
+          float flow = 1.0 + (streak - 0.5) * 0.28 * (0.55 + 0.45 * midBand);
+          sampledDiffuseColor.rgb *= flow;
+
+          diffuseColor *= sampledDiffuseColor;
+        #endif
+        `
+      );
+    };
+    mat.customProgramCacheKey = () => 'island-waterfall-uv-flow-v5';
+    return mat;
+  }
+
+  /**
+   * Pool / landing spray — soft beach-like UV wash (same idea as the ocean shore,
+   * lower amplitude) so it reads as water settling after the fall hits.
+   */
+  function makeWaterfallPoolMaterial(srcTex) {
+    const mat = new THREE.MeshBasicMaterial({
+      map: srcTex,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    mat.userData.uTime = { value: 0 };
+    mat.userData.uReduced = { value: reducedMotion ? 1 : 0 };
+
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = mat.userData.uTime;
+      shader.uniforms.uReduced = mat.userData.uReduced;
+      mat.userData.shader = shader;
+
+      shader.fragmentShader =
+        `
+        uniform float uTime;
+        uniform float uReduced;
+        float poolHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float poolNoise(vec2 p){
+          vec2 i = floor(p); vec2 f = fract(p);
+          float a = poolHash(i), b = poolHash(i + vec2(1.0, 0.0));
+          float c = poolHash(i + vec2(0.0, 1.0)), d = poolHash(i + vec2(1.0, 1.0));
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+        ` + shader.fragmentShader;
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec2 uv = vMapUv;
+          float t = uTime * (1.0 - uReduced);
+          // Stronger toward the lower half where water lands and washes out.
+          float impact = 1.0 - smoothstep(0.15, 0.75, uv.y);
+          float n1 = poolNoise(uv * vec2(18.0, 10.0) + vec2(t * 0.22, -t * 0.12));
+          float n2 = poolNoise(uv * vec2(36.0, 16.0) - vec2(t * 0.16, t * 0.28));
+          float wash = sin(uv.x * 4.2 + t * 0.75 + n1 * 2.0) * 0.5 + 0.5;
+          float wash2 = sin(uv.x * 7.5 - t * 0.5 + n2 * 3.0) * 0.5 + 0.5;
+          float lap = mix(wash, wash2, 0.4);
+          float grain = (n1 - 0.5) * 0.0035 + (n2 - 0.5) * 0.0018;
+          // ~half the beach shore amplitude — same feel, quieter.
+          vec2 distort = vec2(
+            sin(uv.y * 32.0 + t * 0.85 + n1 * 3.5) * impact * 0.0045 + grain * impact * 1.2,
+            (lap - 0.5) * impact * 0.012 + grain * 0.5 + sin(t * 0.9 + uv.x * 5.0) * impact * 0.0035
+          );
+          vec4 sampledDiffuseColor = texture2D(map, clamp(uv + distort, 0.0, 1.0));
+          diffuseColor *= sampledDiffuseColor;
+        #endif
+        `
+      );
+    };
+    mat.customProgramCacheKey = () => 'island-waterfall-pool-v1';
+    return mat;
+  }
+
+  /**
    * Corner foliage: sway only the leafy upper half on the outer side.
    * Rocks/sand (bottom ~50%) stay still. Motion is biased inward so the
    * hard-cropped PNG edge doesn't swing into view.
@@ -371,13 +520,57 @@
     return tex;
   }
 
+  /** Soft white points — per-particle aFade (0..1) fades them as they fall. */
+  function makeSoftPointsMaterial(sizePx, peakOpacity) {
+    const mat = new THREE.PointsMaterial({
+      map: particleTex(),
+      color: 0xeaf6ff,
+      size: sizePx,
+      transparent: true,
+      opacity: peakOpacity,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: false,
+    });
+    mat.onBeforeCompile = (shader) => {
+      shader.vertexShader =
+        `
+        attribute float aFade;
+        varying float vFade;
+        ` + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+        #include <begin_vertex>
+        vFade = aFade;
+        `
+      );
+      shader.fragmentShader =
+        `
+        varying float vFade;
+        ` + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <color_fragment>',
+        `
+        #include <color_fragment>
+        diffuseColor.a *= clamp(vFade, 0.0, 1.0);
+        `
+      );
+    };
+    mat.customProgramCacheKey = () => 'island-soft-points-fade-v2';
+    return mat;
+  }
+
   function createMist(origin, count) {
     const positions = new Float32Array(count * 3);
+    const fades = new Float32Array(count);
     const velocities = [];
     for (let i = 0; i < count; i++) {
       positions[i * 3] = origin.x + (Math.random() - 0.5) * 0.06;
       positions[i * 3 + 1] = origin.y + Math.random() * 0.04;
       positions[i * 3 + 2] = origin.z;
+      fades[i] = Math.random();
       velocities.push({
         vx: (Math.random() - 0.5) * 0.015,
         vy: 0.01 + Math.random() * 0.025,
@@ -386,17 +579,89 @@
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({
-      map: particleTex(),
-      color: 0xffffff,
-      size: 0.05,
-      transparent: true,
-      opacity: 0.4,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const pts = new THREE.Points(geo, mat);
+    geo.setAttribute('aFade', new THREE.BufferAttribute(fades, 1));
+    const pts = new THREE.Points(geo, makeSoftPointsMaterial(8, 0.14));
+    pts.renderOrder = 1200;
     pts.userData = { velocities, origin };
+    return pts;
+  }
+
+  /** Tiny white droplets falling along the cascade face. */
+  function createWaterfallDroplets(top, bottom, count) {
+    const positions = new Float32Array(count * 3);
+    const fades = new Float32Array(count);
+    const velocities = [];
+    const spanY = Math.max(0.04, top.y - bottom.y);
+    for (let i = 0; i < count; i++) {
+      const life = Math.random();
+      positions[i * 3] = top.x + (Math.random() - 0.5) * 0.045;
+      positions[i * 3 + 1] = top.y - life * spanY;
+      positions[i * 3 + 2] = top.z;
+      // Fade out toward the bottom of the fall.
+      fades[i] = Math.max(0, 1 - life);
+      velocities.push({
+        vx: (Math.random() - 0.5) * 0.012,
+        vy: -(0.045 + Math.random() * 0.07),
+        life,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('aFade', new THREE.BufferAttribute(fades, 1));
+    const pts = new THREE.Points(geo, makeSoftPointsMaterial(4, 0.42));
+    pts.renderOrder = 1201;
+    pts.userData = { velocities, top, bottom, spanY };
+    return pts;
+  }
+
+  /**
+   * Arc droplets: spawn at the bottom of waterfall-01, fly a short parabola,
+   * and land on waterfall-02. Uses real vx/vy + gravity so motion is obvious.
+   */
+  function createArcSplash(start, end, count) {
+    const positions = new Float32Array(count * 3);
+    const fades = new Float32Array(count);
+    const particles = [];
+
+    function seed(p, randomizeAge) {
+      p.x0 = start.x + (Math.random() - 0.5) * 0.028;
+      p.y0 = start.y + (Math.random() - 0.5) * 0.01;
+      // Aim toward the spray sheet with a sideways fan.
+      const tx = end.x + (Math.random() - 0.5) * 0.08 - p.x0;
+      const ty = end.y + (Math.random() - 0.5) * 0.03 - p.y0;
+      const flight = 0.55 + Math.random() * 0.45; // seconds
+      // Initial upward kick so the path reads as a parabola, then gravity pulls down.
+      p.vx = tx / flight + (Math.random() - 0.5) * 0.04;
+      p.vy = Math.max(0.02, ty / flight) + 0.06 + Math.random() * 0.08;
+      p.g = 0.28 + Math.random() * 0.18;
+      p.age = randomizeAge ? Math.random() * flight : 0;
+      p.life = flight;
+      p.x = p.x0;
+      p.y = p.y0;
+    }
+
+    for (let i = 0; i < count; i++) {
+      const p = { x: 0, y: 0, x0: 0, y0: 0, vx: 0, vy: 0, g: 0, age: 0, life: 1 };
+      seed(p, true);
+      // Advance once so randomized particles aren't all stacked at spawn.
+      p.x = p.x0 + p.vx * p.age;
+      p.y = p.y0 + p.vy * p.age - 0.5 * p.g * p.age * p.age;
+      particles.push(p);
+      positions[i * 3] = p.x;
+      positions[i * 3 + 1] = p.y;
+      positions[i * 3 + 2] = start.z;
+      const u = p.age / p.life;
+      fades[i] = u < 0.1 ? u / 0.1 : u > 0.7 ? Math.max(0, 1 - (u - 0.7) / 0.3) : 0.85;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('aFade', new THREE.BufferAttribute(fades, 1));
+    // ~50% of previous brightness.
+    const pts = new THREE.Points(geo, makeSoftPointsMaterial(5, 0.3));
+    pts.renderOrder = 1202;
+    pts.userData = { particles, start, end, seed };
     return pts;
   }
 
@@ -581,6 +846,13 @@
         mat = makeWakeMaterial(texMap[p.file]);
         waveMats.push(mat);
         wakeMat = mat;
+      } else if (p.id === 'waterfall') {
+        mat = makeWaterfallMaterial(texMap[p.file], { speed: 0.9 });
+        waterfallMats.push(mat);
+      } else if (p.id === 'waterfallSpray') {
+        // Beach-like pool wash where the fall lands (quieter than ocean shore).
+        mat = makeWaterfallPoolMaterial(texMap[p.file]);
+        waterfallMats.push(mat);
       }
       const mesh = makePlane(texMap[p.file], p, z++, mat);
       mesh.userData.id = p.id;
@@ -600,6 +872,15 @@
     if (propMeshes.wake && shipMesh) {
       propMeshes.wake.position.z = shipMesh.position.z + 0.5;
       propMeshes.wake.userData.basePos = propMeshes.wake.position.clone();
+    }
+    // Cascade / spray sit just in front of the cliff; shore waves in front of both.
+    if (propMeshes.waterfall && mountainMesh) {
+      propMeshes.waterfall.position.z = mountainMesh.position.z + 0.15;
+      propMeshes.waterfall.userData.basePos = propMeshes.waterfall.position.clone();
+    }
+    if (propMeshes.waterfallSpray && mountainMesh) {
+      propMeshes.waterfallSpray.position.z = mountainMesh.position.z + 0.25;
+      propMeshes.waterfallSpray.userData.basePos = propMeshes.waterfallSpray.position.clone();
     }
     if (propMeshes.mountainWaves && mountainMesh) {
       propMeshes.mountainWaves.position.z = mountainMesh.position.z + 0.4;
@@ -662,8 +943,49 @@
       propMeshes[p.id] = mesh;
     });
 
-    // Waterfall mist near mountain face
-    if (mountainMesh) {
+    // Arc droplets: leave the bottom of waterfall-01 and land on waterfall-02.
+    if (propMeshes.waterfall && propMeshes.waterfallSpray) {
+      const wf = propMeshes.waterfall;
+      const spray = propMeshes.waterfallSpray;
+      const frontZ = (propMeshes.mountainWaves
+        ? propMeshes.mountainWaves.position.z
+        : spray.position.z) + 0.5;
+      // Bottom edge of the cascade sheet.
+      const start = new THREE.Vector3(
+        wf.position.x,
+        wf.position.y - wf.geometry.parameters.height * 0.48,
+        frontZ
+      );
+      // Onto the spray / pool sheet.
+      const end = new THREE.Vector3(
+        spray.position.x,
+        spray.position.y - spray.geometry.parameters.height * 0.35,
+        frontZ
+      );
+      splashPoints = createArcSplash(start, end, reducedMotion ? 10 : 52);
+      artRoot.add(splashPoints);
+
+      mistPoints = createMist(
+        new THREE.Vector3(end.x, end.y - 0.01, frontZ),
+        reducedMotion ? 6 : 22
+      );
+      artRoot.add(mistPoints);
+    } else if (propMeshes.waterfallSpray) {
+      const spray = propMeshes.waterfallSpray;
+      const frontZ = spray.position.z + 0.5;
+      mistPoints = createMist(
+        new THREE.Vector3(spray.position.x, spray.position.y, frontZ),
+        reducedMotion ? 6 : 24
+      );
+      artRoot.add(mistPoints);
+    } else if (propMeshes.waterfall) {
+      const wf = propMeshes.waterfall;
+      mistPoints = createMist(
+        new THREE.Vector3(wf.position.x, wf.position.y - wf.geometry.parameters.height * 0.35, wf.position.z + 0.4),
+        reducedMotion ? 6 : 28
+      );
+      artRoot.add(mistPoints);
+    } else if (mountainMesh) {
       const mistOrigin = new THREE.Vector3(
         mountainMesh.position.x - 0.12,
         mountainMesh.position.y - 0.05,
@@ -867,6 +1189,9 @@
       for (let i = 0; i < waveMats.length; i++) {
         waveMats[i].userData.uTime.value = t;
       }
+      for (let i = 0; i < waterfallMats.length; i++) {
+        waterfallMats[i].userData.uTime.value = t;
+      }
       if (propMeshes.shipFar) {
         const b = propMeshes.shipFar.userData.basePos;
         propMeshes.shipFar.position.y = b.y + Math.sin(t * 0.8 + 1) * 0.004;
@@ -890,25 +1215,61 @@
         bird.scale.x = Math.cos(a) >= 0 ? 1 : -1;
         bird.scale.y = 1 + Math.sin(t * 9 + p.phase) * 0.12;
       });
+    }
 
-      if (mistPoints) {
-        const pos = mistPoints.geometry.attributes.position;
-        const vels = mistPoints.userData.velocities;
-        const o = mistPoints.userData.origin;
-        for (let i = 0; i < vels.length; i++) {
-          const v = vels[i];
-          v.life += dt * 0.4;
-          pos.array[i * 3] += v.vx * dt;
-          pos.array[i * 3 + 1] += v.vy * dt;
-          if (v.life > 1) {
-            v.life = 0;
-            pos.array[i * 3] = o.x + (Math.random() - 0.5) * 0.06;
-            pos.array[i * 3 + 1] = o.y;
-          }
+    // Waterfall particles always animate (even with reduced motion — they're subtle).
+    if (mistPoints) {
+      const pos = mistPoints.geometry.attributes.position;
+      const fade = mistPoints.geometry.attributes.aFade;
+      const vels = mistPoints.userData.velocities;
+      const o = mistPoints.userData.origin;
+      for (let i = 0; i < vels.length; i++) {
+        const v = vels[i];
+        v.life += dt * 0.4;
+        pos.array[i * 3] += v.vx * dt;
+        pos.array[i * 3 + 1] += v.vy * dt;
+        const lf = Math.min(1, v.life);
+        fade.array[i] = lf < 0.2 ? lf / 0.2 : 1 - (lf - 0.2) / 0.8;
+        if (v.life > 1) {
+          v.life = 0;
+          pos.array[i * 3] = o.x + (Math.random() - 0.5) * 0.06;
+          pos.array[i * 3 + 1] = o.y;
+          fade.array[i] = 0;
         }
-        pos.needsUpdate = true;
-        mistPoints.material.opacity = 0.28 + Math.sin(t * 2.2) * 0.12;
       }
+      pos.needsUpdate = true;
+      fade.needsUpdate = true;
+    }
+
+    if (splashPoints) {
+      const pos = splashPoints.geometry.attributes.position;
+      const fade = splashPoints.geometry.attributes.aFade;
+      const particles = splashPoints.userData.particles;
+      const seed = splashPoints.userData.seed;
+      const z = splashPoints.userData.start.z;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.age += dt;
+        p.vy -= p.g * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        const u = Math.min(1, p.age / p.life);
+        pos.array[i * 3] = p.x;
+        pos.array[i * 3 + 1] = p.y;
+        pos.array[i * 3 + 2] = z;
+        fade.array[i] = u < 0.1 ? u / 0.1 : u > 0.7 ? Math.max(0, 1 - (u - 0.7) / 0.3) : 0.85;
+        if (p.age >= p.life || p.y < splashPoints.userData.end.y - 0.04) {
+          seed(p, false);
+          p.x = p.x0;
+          p.y = p.y0;
+          pos.array[i * 3] = p.x0;
+          pos.array[i * 3 + 1] = p.y0;
+          pos.array[i * 3 + 2] = z;
+          fade.array[i] = 0;
+        }
+      }
+      pos.needsUpdate = true;
+      fade.needsUpdate = true;
     }
 
     renderer.render(scene, camera);

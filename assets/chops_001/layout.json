@@ -66,12 +66,26 @@
       "w": 407,
       "h": 226
     },
-    "mountain.png": {
-      "file": "mountain.png",
-      "x": 652,
+    "_0007_mountain-without-waterfall.png": {
+      "file": "_0007_mountain-without-waterfall.png",
+      "x": 680,
       "y": 170,
-      "w": 581,
-      "h": 396
+      "w": 515,
+      "h": 340
+    },
+    "_0007_waterfall-01.png": {
+      "file": "_0007_waterfall-01.png",
+      "x": 858,
+      "y": 292,
+      "w": 95,
+      "h": 194
+    },
+    "_0007_waterfall-02.png": {
+      "file": "_0007_waterfall-02.png",
+      "x": 801,
+      "y": 413,
+      "w": 117,
+      "h": 66
     },
     "mountain-waves.png": {
       "file": "mountain-waves.png",
