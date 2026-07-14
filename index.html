@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quills Studios — The Journey to Treasure Island</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky-top:#8FE0FF;
+  --sea-mid:#17ADC2;
+  --sand:#F5D68B;
+  --sand-dark:#DDA84E;
+  --wood-dark:#6B4522;
+  --gold:#F2A93B;
+  --coral:#FF6B4A;
+  --ink:#0E2F42;
+  --cream:#FFF7E6;
+  --panel-bg:#FFFBF0;
+  --shadow: 0 12px 30px rgba(14,47,66,.25);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Nunito', sans-serif;
+  color:var(--ink);
+  overflow:hidden;
+  background:#6ec8ff;
+  --panel-width:clamp(320px, 32vw, 480px);
+}
+
+.stage{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+  background:linear-gradient(180deg, #6ec8ff 0%, #b8e8ff 45%, #ffe49e 62%, #17adc2 68%, #0c7f98 100%);
+  transition:width .38s cubic-bezier(.22,.9,.32,1);
+}
+
+#island-canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:1;
+  display:block;
+  pointer-events:none;
+}
+
+.ui-layer{
+  position:absolute;
+  inset:0;
+  z-index:20;
+  pointer-events:none;
+}
+.ui-layer .hotspot,
+.ui-layer .topbar,
+.ui-layer .contact-btn,
+.ui-layer a,
+.ui-layer button{
+  pointer-events:auto;
+}
+
+/* ---------- TOP BAR ---------- */
+.topbar{
+  position:absolute;
+  top:0; left:0; right:0;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:18px 26px;
+  pointer-events:none;
+}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  pointer-events:auto;
+}
+.logo .quill{
+  font-size:26px;
+  transform:rotate(-15deg);
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.25));
+}
+.logo-text{
+  font-family:'Fraunces', serif;
+  font-weight:700;
+  font-size:19px;
+  color:var(--cream);
+  letter-spacing:.3px;
+  text-shadow:0 2px 8px rgba(14,47,66,.55);
+  line-height:1.1;
+}
+.logo-text span{
+  display:block;
+  font-family:'Nunito',sans-serif;
+  font-weight:700;
+  font-size:10px;
+  letter-spacing:2.5px;
+  color:var(--gold);
+  text-shadow:none;
+}
+.contact-bar{
+  display:flex;
+  gap:10px;
+  pointer-events:auto;
+}
+.contact-btn{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:rgba(14,47,66,.55);
+  backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.25);
+  color:var(--cream);
+  padding:9px 14px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:13px;
+  text-decoration:none;
+  transition:transform .15s ease, background .15s ease;
+}
+.contact-btn:hover{
+  background:var(--coral);
+  transform:translateY(-2px);
+}
+.contact-btn .ic{font-size:15px;}
+@media(max-width:640px){
+  .contact-btn span.label{display:none;}
+  .contact-btn{padding:9px 11px;}
+}
+
+/* ---------- HERO TITLE ---------- */
+.hero-copy{
+  position:absolute;
+  top:78px;
+  left:50%;
+  transform:translateX(-50%);
+  text-align:center;
+  z-index:20;
+  width:min(640px, 88vw);
+  pointer-events:none;
+}
+.hero-eyebrow{
+  font-family:'Nunito',sans-serif;
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:3px;
+  color:var(--wood-dark);
+  background:rgba(255,247,230,.85);
+  display:inline-block;
+  padding:5px 14px;
+  border-radius:999px;
+  margin-bottom:10px;
+}
+.hero-title{
+  font-family:'Fraunces', serif;
+  font-weight:900;
+  font-size:clamp(28px, 5vw, 46px);
+  color:var(--cream);
+  text-shadow:0 3px 0 rgba(107,69,34,.4), 0 10px 20px rgba(14,47,66,.35);
+  line-height:1.05;
+}
+.hero-sub{
+  margin-top:10px;
+  font-size:14px;
+  font-weight:700;
+  color:var(--cream);
+  text-shadow:0 2px 6px rgba(14,47,66,.5);
+  letter-spacing:.3px;
+}
+
+/* ---------- HOTSPOTS ---------- */
+.hotspot{
+  position:absolute;
+  z-index:25;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-family:inherit;
+  transform:translate(-50%, -50%);
+  will-change:left, top;
+}
+.hotspot-inner{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  animation:bob 4.5s ease-in-out infinite;
+}
+.hotspot .isle{
+  position:relative;
+  width:72px; height:72px;
+  border-radius:50%;
+  background:rgba(255,247,230,.15);
+  border:3px solid rgba(255,255,255,.65);
+  box-shadow:var(--shadow), inset 0 0 0 3px rgba(14,47,66,.15);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  backdrop-filter:blur(2px);
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.hotspot:hover .isle, .hotspot:focus-visible .isle{
+  transform:scale(1.09) translateY(-3px);
+  box-shadow:0 16px 34px rgba(14,47,66,.35);
+}
+.hotspot .badge{
+  position:absolute;
+  top:-6px; left:-6px;
+  width:28px; height:28px;
+  border-radius:50%;
+  background:var(--coral);
+  color:#fff;
+  font-family:'JetBrains Mono', monospace;
+  font-weight:700;
+  font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--cream);
+  box-shadow:0 4px 10px rgba(14,47,66,.3);
+}
+.hotspot .tag{
+  background:var(--cream);
+  color:var(--wood-dark);
+  font-weight:800;
+  font-size:12px;
+  line-height:1.2;
+  padding:6px 12px;
+  border-radius:10px;
+  box-shadow:var(--shadow);
+  text-align:center;
+  max-width:130px;
+  border-bottom:3px solid var(--sand-dark);
+}
+@keyframes bob{
+  0%,100%{ transform:translateY(0);}
+  50%{ transform:translateY(-8px);}
+}
+
+.route{
+  position:absolute;
+  inset:0;
+  z-index:10;
+  pointer-events:none;
+}
+
+.footer-tag{
+  position:absolute;
+  bottom:14px; left:50%; transform:translateX(-50%);
+  z-index:22;
+  text-align:center;
+  color:var(--cream);
+  font-weight:700;
+  font-size:12.5px;
+  text-shadow:0 2px 8px rgba(14,47,66,.6);
+  width:min(420px,86vw);
+  pointer-events:none;
+}
+
+/* ---------- SLIDE PANEL ---------- */
+.overlay{
+  position:fixed; inset:0;
+  background:rgba(14,47,66,.35);
+  backdrop-filter:blur(2px);
+  opacity:0; pointer-events:none;
+  transition:opacity .38s cubic-bezier(.22,.9,.32,1);
+  z-index:80;
+}
+.overlay.open{ opacity:1; pointer-events:auto; }
+
+.panel{
+  position:fixed;
+  top:0; right:0;
+  width:var(--panel-width);
+  height:100vh;
+  background:var(--panel-bg);
+  box-shadow:-14px 0 40px rgba(14,47,66,.35);
+  transform:translateX(100%);
+  transition:transform .38s cubic-bezier(.22,.9,.32,1);
+  z-index:90;
+  overflow-y:auto;
+  padding:26px 24px 60px;
+}
+.panel.open{ transform:translateX(0); }
+.panel::-webkit-scrollbar{width:8px;}
+.panel::-webkit-scrollbar-thumb{background:var(--sand-dark); border-radius:8px;}
+
+.panel-close{
+  position:absolute;
+  top:18px; right:18px;
+  width:34px; height:34px;
+  border-radius:50%;
+  border:none;
+  background:var(--ink);
+  color:var(--cream);
+  font-size:16px;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.panel-close:hover{ background:var(--coral); }
+
+.panel-eyebrow{
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:6px;
+}
+.panel-eyebrow .num{
+  width:30px; height:30px;
+  border-radius:50%;
+  background:var(--coral);
+  color:#fff;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  font-size:12px;
+  display:flex; align-items:center; justify-content:center;
+}
+.panel-eyebrow .cat{
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:2px;
+  color:var(--wood-dark);
+  text-transform:uppercase;
+}
+.panel h2{
+  font-family:'Fraunces', serif;
+  font-weight:800;
+  font-size:26px;
+  color:var(--ink);
+  margin:2px 0 12px;
+  padding-right:30px;
+}
+.panel p.lead{
+  font-size:14.5px;
+  line-height:1.6;
+  color:#3B5A6B;
+  margin-bottom:22px;
+}
+.section-label{
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:var(--wood-dark);
+  margin:22px 0 10px;
+  border-bottom:2px dashed var(--sand-dark);
+  padding-bottom:6px;
+}
+.chip-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+}
+.chip{
+  background:#fff;
+  border:1px solid #EFDFB8;
+  border-radius:12px;
+  padding:12px 8px;
+  text-align:center;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--ink);
+}
+.chip .ic{ font-size:22px; display:block; margin-bottom:4px;}
+
+.game-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:12px;
+}
+.game-card{
+  background:linear-gradient(160deg, var(--ink), #1C4A63);
+  border-radius:14px;
+  padding:16px 10px;
+  text-align:center;
+  color:var(--cream);
+  box-shadow:var(--shadow);
+}
+.game-card .ic{ font-size:30px; }
+.game-card .name{
+  font-family:'Fraunces', serif;
+  font-weight:700;
+  font-size:13px;
+  margin-top:8px;
+  line-height:1.2;
+}
+
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+}
+.stat-card{
+  background:var(--sand);
+  border-radius:12px;
+  padding:12px 8px;
+  text-align:center;
+}
+.stat-card .label{
+  font-size:9.5px;
+  font-weight:800;
+  letter-spacing:1px;
+  color:var(--wood-dark);
+  text-transform:uppercase;
+}
+.stat-card .val{
+  font-family:'JetBrains Mono', monospace;
+  font-weight:700;
+  font-size:14px;
+  color:var(--ink);
+  margin-top:4px;
+}
+
+.check-list{ list-style:none; margin-top:10px;}
+.check-list li{
+  font-size:13.5px;
+  padding:6px 0 6px 26px;
+  position:relative;
+  color:#3B5A6B;
+}
+.check-list li::before{
+  content:'✓';
+  position:absolute; left:0; top:5px;
+  width:18px; height:18px;
+  background:var(--sea-mid);
+  color:#fff;
+  border-radius:50%;
+  font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+}
+
+.team-card{
+  display:flex; align-items:center; gap:14px;
+  background:#fff;
+  border:1px solid #EFDFB8;
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:10px;
+}
+.team-avatar{
+  width:52px; height:52px;
+  border-radius:50%;
+  background:linear-gradient(160deg, var(--gold), var(--coral));
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px;
+  color:#fff;
+  flex-shrink:0;
+}
+.team-name{ font-family:'Fraunces', serif; font-weight:700; font-size:15px;}
+.team-role{ font-size:12px; color:#6B879A; font-weight:700;}
+
+.cta-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  width:100%;
+  background:var(--coral);
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+  padding:13px 18px;
+  border-radius:999px;
+  text-decoration:none;
+  margin-top:18px;
+  box-shadow:0 8px 18px rgba(255,107,74,.4);
+  transition:transform .15s ease;
+}
+.cta-btn:hover{ transform:translateY(-2px); }
+
+.portfolio-row{
+  display:flex; gap:10px; overflow-x:auto; padding-bottom:6px;
+}
+.portfolio-card{
+  min-width:120px;
+  background:#fff;
+  border:1px solid #EFDFB8;
+  border-radius:12px;
+  padding:12px;
+  text-align:center;
+  flex-shrink:0;
+}
+.portfolio-card .ic{ font-size:24px;}
+.portfolio-card .name{ font-size:11.5px; font-weight:800; margin-top:6px;}
+
+@media(max-width:760px){
+  .hero-copy{ top:64px; }
+  .hero-title{ font-size:22px; }
+  .hotspot .isle{ width:56px; height:56px; font-size:22px;}
+  .hotspot .tag{ font-size:10.5px; padding:5px 9px; max-width:92px;}
+  .footer-tag{ font-size:11px; bottom:8px;}
+  body{ --panel-width:100vw; }
+  /* Full-bleed panel already covers the stage — skip dim fade. */
+  .overlay{
+    background:transparent;
+    backdrop-filter:none;
+    transition:none;
+  }
+}
+
+@media(min-width:761px){
+  /* Desktop: never dim/blur the island — that caused a visible fade on open/close. */
+  .overlay{
+    background:transparent;
+    backdrop-filter:none;
+    transition:none;
+  }
+  body.panel-open .stage{
+    width:calc(100vw - var(--panel-width));
+  }
+  body.panel-open .overlay{
+    right:var(--panel-width);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .hotspot-inner{ animation:none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <canvas id="island-canvas" aria-hidden="true"></canvas>
+
+  <div class="ui-layer">
+    <div class="topbar">
+      <div class="logo">
+        <span class="quill">🪶</span>
+        <div class="logo-text">QUILLS<span>GAME STUDIOS</span></div>
+      </div>
+      <div class="contact-bar">
+        <a class="contact-btn" href="mailto:hello@quillsstudios.com"><span class="ic">✉️</span><span class="label">Contact Us</span></a>
+        <a class="contact-btn" href="tel:+919886012345"><span class="ic">📞</span><span class="label">+91 98860 12345</span></a>
+      </div>
+    </div>
+
+    <div class="hero-copy">
+      <span class="hero-eyebrow">THE JOURNEY TO TREASURE ISLAND</span>
+      <div class="hero-title">Crafting Immersive Games, Delivering Real Value</div>
+    </div>
+
+    <svg class="route" id="route-svg" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+      <path id="route-path" d=""
+        fill="none" stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-dasharray="2 14" stroke-linecap="round"/>
+    </svg>
+
+    <!-- Positions set in JS from chops layout (art-space → screen cover fit) -->
+    <button class="hotspot" data-spot="1" onclick="openPanel(1)" aria-label="Casino Games Development">
+      <div class="hotspot-inner">
+        <div class="isle"><span class="badge">01</span>⛵</div>
+        <div class="tag">Casino Games Development</div>
+      </div>
+    </button>
+
+    <button class="hotspot" data-spot="2" style="animation-delay:-1s;" onclick="openPanel(2)" aria-label="Casual and Hyper Casual Games">
+      <div class="hotspot-inner" style="animation-delay:-1s;">
+        <div class="isle"><span class="badge" style="background:#7B5CFF;">02</span>🏝️</div>
+        <div class="tag">Casual &amp; Hyper Casual Games</div>
+      </div>
+    </button>
+
+    <button class="hotspot" data-spot="3" onclick="openPanel(3)" aria-label="About Our Team">
+      <div class="hotspot-inner" style="animation-delay:-2s;">
+        <div class="isle"><span class="badge" style="background:#2FAE6A;">03</span>🏘️</div>
+        <div class="tag">About Our Team</div>
+      </div>
+    </button>
+
+    <button class="hotspot" data-spot="4" onclick="openPanel(4)" aria-label="Our Technology and Services">
+      <div class="hotspot-inner" style="animation-delay:-1.5s;">
+        <div class="isle"><span class="badge" style="background:#C0392B;">04</span>💰</div>
+        <div class="tag">Our Technology &amp; Services</div>
+      </div>
+    </button>
+
+    <button class="hotspot" data-spot="5" onclick="openPanel(5)" aria-label="Our Portfolio and Clients">
+      <div class="hotspot-inner" style="animation-delay:-3s;">
+        <div class="isle"><span class="badge" style="background:#1E88C8;">05</span>🗼</div>
+        <div class="tag">Our Portfolio &amp; Clients</div>
+      </div>
+    </button>
+
+    <div class="footer-tag">We build engaging real-money &amp; casual games that players love and operators trust.</div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <button class="panel-close" onclick="closePanel()" aria-label="Close">✕</button>
+  <div id="panel-content"></div>
+</div>
+
+<script>
+const content = {
+  1: {
+    cat: "Chapter One",
+    title: "Casino Games Development",
+    lead: "From concept to deployment, we craft high-performance, feature-rich casino games that drive player engagement and deliver measurable business results.",
+    body: `
+      <div class="section-label">Our Expertise</div>
+      <div class="chip-grid">
+        <div class="chip"><span class="ic">🎰</span>Slots</div>
+        <div class="chip"><span class="ic">🃏</span>Table Games</div>
+        <div class="chip"><span class="ic">🎥</span>Live Casino</div>
+        <div class="chip"><span class="ic">🚀</span>Crash Games</div>
+        <div class="chip"><span class="ic">🎱</span>Bingo &amp; Instant</div>
+        <div class="chip"><span class="ic">🧩</span>Custom Builds</div>
+      </div>
+      <div class="section-label">Game Previews</div>
+      <div class="game-grid">
+        <div class="game-card"><div class="ic">🏴‍☠️</div><div class="name">Bandit's Bounty</div></div>
+        <div class="game-card"><div class="ic">🪔</div><div class="name">Secrets of the Lamp</div></div>
+        <div class="game-card"><div class="ic">🧭</div><div class="name">Pirate's Fortune</div></div>
+        <div class="game-card"><div class="ic">💥</div><div class="name">Crash Gold</div></div>
+      </div>
+      <div class="section-label">Our Maths Capability</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">RTP Range</div><div class="val">90%–97%+</div></div>
+        <div class="stat-card"><div class="label">Volatility</div><div class="val">Low–High</div></div>
+        <div class="stat-card"><div class="label">Certification</div><div class="val">GLI / MGA / UKGC</div></div>
+      </div>
+      <ul class="check-list">
+        <li>Advanced bonus features</li>
+        <li>Custom math modelling</li>
+        <li>RNG &amp; fair-play compliance</li>
+        <li>Multi-platform support (Web, Mobile, Desktop)</li>
+        <li>LiveOps &amp; gamification</li>
+      </ul>
+      <a class="cta-btn" href="mailto:hello@quillsstudios.com?subject=Casino%20Games%20Enquiry">✉️ View Our Games</a>
+    `
+  },
+  2: {
+    cat: "Chapter Two",
+    title: "Casual &amp; Hyper Casual Games",
+    lead: "Quick to learn, hard to put down. We design casual and hyper-casual titles built for fast fun, strong retention, and viral reach.",
+    body: `
+      <div class="section-label">What We Build</div>
+      <div class="chip-grid">
+        <div class="chip"><span class="ic">🧠</span>Puzzle</div>
+        <div class="chip"><span class="ic">🏃</span>Arcade</div>
+        <div class="chip"><span class="ic">🎯</span>Idle &amp; Merge</div>
+        <div class="chip"><span class="ic">🎮</span>Mini Games</div>
+        <div class="chip"><span class="ic">🏆</span>Leaderboards</div>
+        <div class="chip"><span class="ic">🎁</span>Rewarded Ads</div>
+      </div>
+      <div class="section-label">Why Studios Choose Us</div>
+      <ul class="check-list">
+        <li>Rapid prototyping — playable builds in days</li>
+        <li>Retention-first level and reward design</li>
+        <li>Lightweight builds for low-end devices</li>
+        <li>Analytics &amp; A/B testing baked in</li>
+        <li>Cross-platform: iOS, Android, Web</li>
+      </ul>
+      <a class="cta-btn" href="mailto:hello@quillsstudios.com?subject=Casual%20Games%20Enquiry">✉️ Talk To Us</a>
+    `
+  },
+  3: {
+    cat: "Chapter Three",
+    title: "About Our Team",
+    lead: "Quills Studios is captained by a small crew of game builders who care about craft, math and player trust in equal measure.",
+    body: `
+      <div class="section-label">Meet The Crew</div>
+      <div class="team-card">
+        <div class="team-avatar">🧑‍✈️</div>
+        <div><div class="team-name">Founder &amp; Captain</div><div class="team-role">Vision &amp; Studio Lead</div></div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🧑‍💻</div>
+        <div><div class="team-name">Pavan</div><div class="team-role">Engineering &amp; Platform</div></div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">🧑‍🎨</div>
+        <div><div class="team-name">Shrikanth</div><div class="team-role">Game Design &amp; Math</div></div>
+      </div>
+      <p style="font-size:12.5px;color:#6B879A;margin-top:10px;">Names and roles are placeholders — send exact titles and headshots and we'll drop them right in.</p>
+      <a class="cta-btn" href="mailto:hello@quillsstudios.com?subject=Say%20Hello">✉️ Send Us A Mail</a>
+    `
+  },
+  4: {
+    cat: "Chapter Four",
+    title: "Our Technology &amp; Services",
+    lead: "A modern, modular tech stack built to ship fast, scale across markets, and stay compliant wherever you operate.",
+    body: `
+      <div class="section-label">Our Stack</div>
+      <div class="chip-grid">
+        <div class="chip"><span class="ic">⚙️</span>Unity / HTML5</div>
+        <div class="chip"><span class="ic">🔌</span>API Integrations</div>
+        <div class="chip"><span class="ic">📊</span>RGS &amp; Math Engine</div>
+        <div class="chip"><span class="ic">☁️</span>Cloud Ops</div>
+        <div class="chip"><span class="ic">🛡️</span>Compliance</div>
+        <div class="chip"><span class="ic">🧪</span>QA &amp; Certification</div>
+      </div>
+      <div class="section-label">Services</div>
+      <ul class="check-list">
+        <li>End-to-end game development</li>
+        <li>Math modelling &amp; simulation</li>
+        <li>Art, animation &amp; sound design</li>
+        <li>Platform &amp; operator integration</li>
+        <li>Post-launch LiveOps support</li>
+      </ul>
+      <a class="cta-btn" href="mailto:hello@quillsstudios.com?subject=Technology%20Enquiry">✉️ Discuss Your Project</a>
+    `
+  },
+  5: {
+    cat: "Chapter Five",
+    title: "Our Portfolio &amp; Clients",
+    lead: "A growing treasury of titles shipped with operators and partners across real-money and casual markets.",
+    body: `
+      <div class="section-label">Selected Work</div>
+      <div class="portfolio-row">
+        <div class="portfolio-card"><div class="ic">🏴‍☠️</div><div class="name">Bandit's Bounty</div></div>
+        <div class="portfolio-card"><div class="ic">🪔</div><div class="name">Secrets of the Lamp</div></div>
+        <div class="portfolio-card"><div class="ic">🧭</div><div class="name">Pirate's Fortune</div></div>
+        <div class="portfolio-card"><div class="ic">💥</div><div class="name">Crash Gold</div></div>
+      </div>
+      <div class="section-label">Trusted By</div>
+      <p style="font-size:13.5px;line-height:1.6;color:#3B5A6B;">Operators and platforms across iGaming and casual markets. Client logos and case studies go here — send them over and we'll chart them on the map.</p>
+      <a class="cta-btn" href="mailto:hello@quillsstudios.com?subject=Let%27s%20Create%20Magic%20Together">✉️ Let's Create Magic Together</a>
+    `
+  }
+};
+
+const panel = document.getElementById('panel');
+const overlay = document.getElementById('overlay');
+const panelContent = document.getElementById('panel-content');
+
+function openPanel(id){
+  const c = content[id];
+  panelContent.innerHTML = `
+    <div class="panel-eyebrow"><div class="num">0${id}</div><div class="cat">${c.cat}</div></div>
+    <h2>${c.title}</h2>
+    <p class="lead">${c.lead}</p>
+    ${c.body}
+  `;
+  panel.classList.add('open');
+  overlay.classList.add('open');
+  document.body.classList.add('panel-open');
+}
+function closePanel(){
+  panel.classList.remove('open');
+  overlay.classList.remove('open');
+  document.body.classList.remove('panel-open');
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel(); });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="island-scene.js"></script>
+</body>
+</html>

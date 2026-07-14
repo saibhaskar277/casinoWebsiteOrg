@@ -1,0 +1,112 @@
+{
+  "artWidth": 1200,
+  "artHeight": 1080,
+  "layers": {
+    "bg": {
+      "file": "_0015_Layer-7.png",
+      "x": 0,
+      "y": 0
+    },
+    "clouds": {
+      "file": "_0014_Layer-8.png",
+      "x": 0,
+      "y": 98
+    },
+    "water": {
+      "file": "_0013_water-Alpha.png",
+      "x": 0,
+      "y": 402
+    },
+    "shadow": {
+      "file": "_0000_shadow.png",
+      "x": 0,
+      "y": 0
+    }
+  },
+  "props": {
+    "_0001_overlay_right.png": {
+      "file": "_0001_overlay_right.png",
+      "x": 718,
+      "y": 402,
+      "w": 482,
+      "h": 678
+    },
+    "_0002_overlay-left.png": {
+      "file": "_0002_overlay-left.png",
+      "x": 0,
+      "y": 673,
+      "w": 327,
+      "h": 407
+    },
+    "_0003_palm-branch-01-right.png": {
+      "file": "_0003_palm-branch-01-right.png",
+      "x": 1080,
+      "y": 57,
+      "w": 120,
+      "h": 181
+    },
+    "_0004_palm-branch-02-right.png": {
+      "file": "_0004_palm-branch-02-right.png",
+      "x": 772,
+      "y": 0,
+      "w": 425,
+      "h": 210
+    },
+    "_0005_palm-tree-branch_03-left.png": {
+      "file": "_0005_palm-tree-branch_03-left.png",
+      "x": 0,
+      "y": 0,
+      "w": 592,
+      "h": 321
+    },
+    "_0006_Layer-4.png": {
+      "file": "_0006_Layer-4.png",
+      "x": 397,
+      "y": 455,
+      "w": 407,
+      "h": 226
+    },
+    "_0007_mountain-with-waterfall.png": {
+      "file": "_0007_mountain-with-waterfall.png",
+      "x": 685,
+      "y": 181,
+      "w": 515,
+      "h": 340
+    },
+    "_0008_fort.png": {
+      "file": "_0008_fort.png",
+      "x": 671,
+      "y": 617,
+      "w": 378,
+      "h": 235
+    },
+    "_0009_Layer-2.png": {
+      "file": "_0009_Layer-2.png",
+      "x": 61,
+      "y": 494,
+      "w": 310,
+      "h": 93
+    },
+    "_0010_ship.png": {
+      "file": "_0010_ship.png",
+      "x": 57,
+      "y": 194,
+      "w": 311,
+      "h": 355
+    },
+    "_0011_treasure-box.png": {
+      "file": "_0011_treasure-box.png",
+      "x": 43,
+      "y": 651,
+      "w": 386,
+      "h": 247
+    },
+    "_0012_ship_02.png": {
+      "file": "_0012_ship_02.png",
+      "x": 460,
+      "y": 387,
+      "w": 97,
+      "h": 90
+    }
+  }
+}

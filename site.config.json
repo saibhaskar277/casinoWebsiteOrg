@@ -1,0 +1,11 @@
+{
+  "name": "Quills Studios",
+  "description": "Treasure Island marketing site",
+  "defaultPagesUrl": "https://saibhaskar277.github.io/casinoWebsiteOrg/",
+  "customDomain": "",
+  "notes": [
+    "Asset paths are relative so the same build works on github.io/repo and on a root custom domain.",
+    "To attach a domain later: set customDomain below, create a CNAME file with that domain, commit, then in GitHub → Settings → Pages → Custom domain enter the same value and enable HTTPS.",
+    "DNS: apex → A records 185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153; www → CNAME to saibhaskar277.github.io"
+  ]
+}
