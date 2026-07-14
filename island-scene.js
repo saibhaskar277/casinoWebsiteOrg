@@ -57,6 +57,23 @@
   let running = true;
   const propMeshes = {};
 
+  function setBootProgress(pct, status) {
+    const fill = document.getElementById('boot-bar-fill');
+    const label = document.getElementById('boot-pct');
+    const statusEl = document.getElementById('boot-status');
+    const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+    if (fill) fill.style.width = `${clamped}%`;
+    if (label) label.textContent = `${clamped}%`;
+    if (status && statusEl) statusEl.textContent = status;
+  }
+
+  function revealSite() {
+    const loader = document.getElementById('boot-loader');
+    document.body.classList.remove('is-loading');
+    document.body.classList.add('is-ready');
+    if (loader) loader.setAttribute('aria-busy', 'false');
+  }
+
   function loadTex(file) {
     return new Promise((resolve, reject) => {
       const loader = new THREE.TextureLoader();
@@ -427,7 +444,20 @@
   async function init() {
     const canvas = document.getElementById('island-canvas');
     const stage = document.getElementById('stage');
-    if (!canvas || !stage || typeof THREE === 'undefined') return;
+    if (!canvas || !stage || typeof THREE === 'undefined') {
+      setBootProgress(100, 'Unable to start the scene');
+      revealSite();
+      return;
+    }
+
+    setBootProgress(4, 'Preparing the voyage…');
+    if (document.fonts && document.fonts.ready) {
+      try {
+        await document.fonts.ready;
+      } catch (_) {
+        /* ignore font wait failures */
+      }
+    }
 
     clock = new THREE.Clock();
     scene = new THREE.Scene();
@@ -455,11 +485,17 @@
       ...LAYOUT.props.map((p) => p.file),
     ];
     const texMap = {};
+    let loadedCount = 0;
+    setBootProgress(8, 'Loading island art…');
     await Promise.all(
       files.map(async (f) => {
         texMap[f] = await loadTex(f);
+        loadedCount += 1;
+        const pct = 8 + (loadedCount / files.length) * 82;
+        setBootProgress(pct, `Loading island art… ${loadedCount}/${files.length}`);
       })
     );
+    setBootProgress(92, 'Compositing the scene…');
 
     let z = -5;
     artRoot.add(makePlane(texMap[LAYOUT.bg.file], LAYOUT.bg, z++));
@@ -695,7 +731,17 @@
       }
     });
 
-    animate();
+    // Paint one frame with all textures uploaded before revealing the UI.
+    setBootProgress(100, 'Ready');
+    resize();
+    positionHotspots();
+    updateRoute();
+    renderer.render(scene, camera);
+    requestAnimationFrame(() => {
+      renderer.render(scene, camera);
+      revealSite();
+      animate();
+    });
   }
 
   function resize() {
@@ -812,9 +858,19 @@
     renderer.render(scene, camera);
   }
 
+  async function boot() {
+    try {
+      await init();
+    } catch (err) {
+      console.error(err);
+      setBootProgress(100, 'Something went wrong — showing the page anyway');
+      revealSite();
+    }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    init();
+    boot();
   }
 })();

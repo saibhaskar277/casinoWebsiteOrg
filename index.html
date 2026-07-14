@@ -30,6 +30,83 @@ body{
   --panel-width:clamp(320px, 32vw, 480px);
 }
 
+/* ---------- BOOT LOADER ---------- */
+.boot-loader{
+  position:fixed; inset:0;
+  z-index:10000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 35%, #b8e8ff 0%, transparent 70%),
+    linear-gradient(180deg, #6ec8ff 0%, #8fd4ef 42%, #ffe49e 100%);
+  transition:opacity .55s ease, visibility .55s ease;
+}
+.boot-loader .boot-brand{
+  font-family:'Fraunces', serif;
+  font-weight:900;
+  font-size:clamp(28px, 5vw, 42px);
+  letter-spacing:.04em;
+  color:var(--ink);
+  text-align:center;
+  line-height:1;
+}
+.boot-loader .boot-brand span{
+  display:block;
+  margin-top:8px;
+  font-family:'Nunito', sans-serif;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.28em;
+  color:var(--wood-dark);
+}
+.boot-loader .boot-status{
+  font-size:13px;
+  font-weight:700;
+  color:rgba(14,47,66,.72);
+  min-height:1.2em;
+}
+.boot-bar{
+  width:min(220px, 56vw);
+  height:6px;
+  border-radius:999px;
+  background:rgba(14,47,66,.12);
+  overflow:hidden;
+}
+.boot-bar-fill{
+  height:100%;
+  width:0%;
+  border-radius:inherit;
+  background:linear-gradient(90deg, var(--sand-dark), var(--coral));
+  transition:width .2s ease;
+}
+.boot-pct{
+  font-family:'JetBrains Mono', monospace;
+  font-size:12px;
+  font-weight:700;
+  color:var(--ink);
+  letter-spacing:.06em;
+}
+body.is-loading .stage,
+body.is-loading .overlay,
+body.is-loading .panel{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+body.is-ready .boot-loader{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+body.is-ready .stage{
+  opacity:1;
+  visibility:visible;
+  transition:opacity .55s ease, width .38s cubic-bezier(.22,.9,.32,1);
+}
+
 .stage{
   position:relative;
   width:100vw;
@@ -521,7 +598,14 @@ body{
 }
 </style>
 </head>
-<body>
+<body class="is-loading">
+
+<div class="boot-loader" id="boot-loader" role="status" aria-live="polite" aria-busy="true">
+  <div class="boot-brand">QUILLS<span>GAME STUDIOS</span></div>
+  <div class="boot-status" id="boot-status">Charting the island…</div>
+  <div class="boot-bar" aria-hidden="true"><div class="boot-bar-fill" id="boot-bar-fill"></div></div>
+  <div class="boot-pct" id="boot-pct">0%</div>
+</div>
 
 <div class="stage" id="stage">
   <canvas id="island-canvas" aria-hidden="true"></canvas>
