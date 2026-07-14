@@ -21,11 +21,13 @@
     shadow: { file: '_0000_shadow.png', x: 0, y: 0, w: 1200, h: 1080 },
     props: [
       { file: '_0012_ship_02.png', x: 460, y: 387, w: 97, h: 90, id: 'shipFar' },
-      { file: '_0007_mountain-with-waterfall.png', x: 685, y: 181, w: 515, h: 340, id: 'mountain' },
+      { file: 'mountain.png', x: 652, y: 170, w: 581, h: 396, id: 'mountain' },
+      { file: 'mountain-waves.png', x: 652, y: 426, w: 581, h: 140, id: 'mountainWaves' },
       { file: '_0009_Layer-2.png', x: 61, y: 494, w: 310, h: 93, id: 'wake' },
       { file: '_0006_Layer-4.png', x: 397, y: 455, w: 407, h: 226, id: 'village' },
       { file: '_0010_ship.png', x: 57, y: 194, w: 311, h: 355, id: 'ship' },
       { file: '_0008_fort.png', x: 671, y: 617, w: 378, h: 235, id: 'fort' },
+      { file: 'fort-waves.png', x: 605, y: 770, w: 511, h: 154, id: 'fortWaves' },
       { file: '_0011_treasure-box.png', x: 43, y: 651, w: 386, h: 247, id: 'treasure' },
       { file: '_0005_palm-tree-branch_03-left.png', x: 0, y: 0, w: 592, h: 321, id: 'palmL' },
       { file: '_0004_palm-branch-02-right.png', x: 772, y: 0, w: 425, h: 210, id: 'palmR2' },
@@ -50,6 +52,7 @@
   let renderer, scene, camera, clock;
   let artRoot, view = { scaleX: 1, scaleY: 1, ox: 0, oy: 0 };
   let waterMat, wakeMat, cloudMesh, shipMesh, shipShadow, mountainMesh;
+  let waveMats = [];
   let palmMeshes = [];
   let mistPoints, seagulls = [];
   let ripples = [];
@@ -496,8 +499,9 @@
     LAYOUT.props.forEach((p) => {
       let mat;
       if (p.id === 'wake') {
-        wakeMat = makeWakeMaterial(texMap[p.file]);
-        mat = wakeMat;
+        mat = makeWakeMaterial(texMap[p.file]);
+        waveMats.push(mat);
+        wakeMat = mat;
       }
       const mesh = makePlane(texMap[p.file], p, z++, mat);
       mesh.userData.id = p.id;
@@ -526,11 +530,18 @@
       if (p.id.startsWith('palm')) palmMeshes.push(mesh);
     });
 
-    // The breaking wave (_0009) belongs in front of the ship's lower hull,
-    // curling against the waterline like in the reference art.
+    // Shore waves sit in front of their landmasses at the waterline.
     if (propMeshes.wake && shipMesh) {
       propMeshes.wake.position.z = shipMesh.position.z + 0.5;
       propMeshes.wake.userData.basePos = propMeshes.wake.position.clone();
+    }
+    if (propMeshes.mountainWaves && mountainMesh) {
+      propMeshes.mountainWaves.position.z = mountainMesh.position.z + 0.4;
+      propMeshes.mountainWaves.userData.basePos = propMeshes.mountainWaves.position.clone();
+    }
+    if (propMeshes.fortWaves && propMeshes.fort) {
+      propMeshes.fortWaves.position.z = propMeshes.fort.position.z + 0.4;
+      propMeshes.fortWaves.userData.basePos = propMeshes.fortWaves.position.clone();
     }
 
     // Soft waterline shadow grounds the ship without darkening its artwork.
@@ -755,7 +766,9 @@
           if (wakeMat) wakeMat.userData.uSwell.value = heave;
         }
       }
-      if (wakeMat) wakeMat.userData.uTime.value = t;
+      for (let i = 0; i < waveMats.length; i++) {
+        waveMats[i].userData.uTime.value = t;
+      }
       if (propMeshes.shipFar) {
         const b = propMeshes.shipFar.userData.basePos;
         propMeshes.shipFar.position.y = b.y + Math.sin(t * 0.8 + 1) * 0.004;

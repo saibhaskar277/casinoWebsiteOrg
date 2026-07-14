@@ -66,12 +66,19 @@
       "w": 407,
       "h": 226
     },
-    "_0007_mountain-with-waterfall.png": {
-      "file": "_0007_mountain-with-waterfall.png",
-      "x": 685,
-      "y": 181,
-      "w": 515,
-      "h": 340
+    "mountain.png": {
+      "file": "mountain.png",
+      "x": 652,
+      "y": 170,
+      "w": 581,
+      "h": 396
+    },
+    "mountain-waves.png": {
+      "file": "mountain-waves.png",
+      "x": 652,
+      "y": 426,
+      "w": 581,
+      "h": 140
     },
     "_0008_fort.png": {
       "file": "_0008_fort.png",
@@ -79,6 +86,13 @@
       "y": 617,
       "w": 378,
       "h": 235
+    },
+    "fort-waves.png": {
+      "file": "fort-waves.png",
+      "x": 605,
+      "y": 770,
+      "w": 511,
+      "h": 154
     },
     "_0009_Layer-2.png": {
       "file": "_0009_Layer-2.png",
