@@ -17,8 +17,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,12 +29,9 @@ jobs:
       - name: Prepare site bundle
         run: |
           mkdir -p _site
-          # Copy only what the live site needs (keeps .git / workflows out of the artifact)
           cp index.html island-scene.js _site/
           cp -r assets _site/assets
-          # Optional custom domain: put your domain in CNAME (see site.config.json)
           if [ -f CNAME ]; then cp CNAME _site/CNAME; fi
-          # Drop unused placeholder island pack from the published bundle if present
           rm -rf _site/assets/island
           rm -f _site/assets/chops_001/_aligned_preview.png \
                 "_site/assets/chops_001/web page ref.jpg" \
@@ -40,19 +40,15 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Auto-enable Pages + Actions source if the repo has not been configured yet
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
