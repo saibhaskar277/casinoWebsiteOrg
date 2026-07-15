@@ -139,7 +139,7 @@ body.is-ready .stage{
   pointer-events:auto;
 }
 
-/* ---------- TOP BAR (assets/chops-002/layout.json → topbar) ---------- */
+/* ---------- TOP BAR (assets/ui/layout.json → topbar) ---------- */
 .topbar{
   position:absolute;
   top:0; left:0; right:0;
@@ -209,8 +209,8 @@ body.is-ready .stage{
   .contact-btn{padding:9px 11px;}
 }
 
-/* ---------- HERO TITLE (driven by assets/chops-002/layout.json → title) ---------- */
-/* Board PNG is 800x320 but wood only fills ~top 230px; box clips the empty bottom. */
+/* ---------- HERO TITLE (driven by assets/ui/layout.json → title) ---------- */
+/* Board PNG sized by layout; box uses aspect-ratio from config. */
 .hero-copy{
   position:absolute;
   top:var(--title-top, 2.2%);
@@ -219,10 +219,10 @@ body.is-ready .stage{
   text-align:center;
   z-index:20;
   width:var(--title-width, 39.6%);
-  aspect-ratio:var(--title-ratio, 800 / 230);
+  aspect-ratio:var(--title-ratio, 780 / 228);
   height:auto;
-  padding:var(--title-pad-top, 4%) var(--title-pad-x, 11%) var(--title-pad-bottom, 4.6%);
-  background:url('assets/chops-002/TITLE%20BOARD.png') top center / 100% auto no-repeat;
+  padding:var(--title-pad-top, 4%) var(--title-pad-x, 12%) var(--title-pad-bottom, 4%);
+  background:url('assets/ui/title-board.png') center center / 100% 100% no-repeat;
   pointer-events:none;
   display:flex;
   flex-direction:column;
@@ -237,6 +237,7 @@ body.is-ready .stage{
   font-weight:800;
   font-size:clamp(var(--title-eyebrow-min, 8px), var(--title-eyebrow-vw, 0.72vw), var(--title-eyebrow-max, 11px));
   letter-spacing:var(--title-eyebrow-tracking, 1.5px);
+  text-transform:uppercase;
   color:rgba(255,247,230,.95);
   background:transparent;
   display:block;
@@ -244,8 +245,9 @@ body.is-ready .stage{
   margin:0;
   text-shadow:0 2px 6px rgba(14,47,66,.55);
   max-width:100%;
-  line-height:1.15;
+  line-height:1.2;
   white-space:nowrap;
+  transform:translateX(var(--title-eyebrow-offset-x, -40px));
 }
 .hero-title{
   font-family:'Fraunces', serif;
@@ -253,14 +255,15 @@ body.is-ready .stage{
   font-size:clamp(var(--title-headline-min, 13px), var(--title-headline-vw, 1.35vw), var(--title-headline-max, 22px));
   color:var(--cream);
   text-shadow:0 2px 0 rgba(107,69,34,.45), 0 6px 12px rgba(14,47,66,.35);
-  line-height:1.18;
+  line-height:1.12;
   max-width:100%;
   margin:0;
   text-wrap:balance;
+  white-space:normal;
 }
 .hero-sub{ display:none; }
 
-/* ---------- HOTSPOTS (chops-002 number + text boards) ---------- */
+/* ---------- HOTSPOTS (ui number + text boards) ---------- */
 /* Layout matches reference: circle medallion on the LEFT, text board BEHIND it
    extending to the right. Hotspot is positioned by its circle center (x,y). */
 .hotspot{
@@ -302,11 +305,11 @@ body.is-ready .stage{
   flex-shrink:0;
   filter:drop-shadow(0 4px 8px rgba(14,47,66,.35));
 }
-.hotspot[data-spot="1"] .isle{ background-image:url('assets/chops-002/number%20board-1.png'); }
-.hotspot[data-spot="2"] .isle{ background-image:url('assets/chops-002/number%20board-5.png'); }
-.hotspot[data-spot="3"] .isle{ background-image:url('assets/chops-002/number%20board-4.png'); }
-.hotspot[data-spot="4"] .isle{ background-image:url('assets/chops-002/number%20board-2.png'); }
-.hotspot[data-spot="5"] .isle{ background-image:url('assets/chops-002/number%20board-3.png'); }
+.hotspot[data-spot="1"] .isle{ background-image:url('assets/ui/number-board-1.png'); }
+.hotspot[data-spot="2"] .isle{ background-image:url('assets/ui/number-board-5.png'); }
+.hotspot[data-spot="3"] .isle{ background-image:url('assets/ui/number-board-4.png'); }
+.hotspot[data-spot="4"] .isle{ background-image:url('assets/ui/number-board-2.png'); }
+.hotspot[data-spot="5"] .isle{ background-image:url('assets/ui/number-board-3.png'); }
 .hotspot:hover .isle, .hotspot:focus-visible .isle{
   transform:scale(1.08) translateY(-2px);
   box-shadow:none;
@@ -340,7 +343,7 @@ body.is-ready .stage{
   width:calc(clamp(var(--tb-min, 120px), var(--tb-vw, 15vw), var(--tb-max, 190px)) * var(--spot-tb-scale, 1));
   aspect-ratio:var(--tb-ratio, 520 / 250);
   height:auto;
-  background:url('assets/chops-002/text%20board.png') center / contain no-repeat;
+  background:url('assets/ui/text-board.png') center / contain no-repeat;
   color:var(--wood-dark);
   font-weight:800;
   font-size:calc(clamp(var(--tb-font-min, 9px), var(--tb-font-vw, 0.95vw), var(--tb-font-max, 12.5px)) * var(--spot-tb-scale, 1));
@@ -649,8 +652,8 @@ body.panel-open .stage{
     </div>
 
     <div class="hero-copy">
-      <span class="hero-eyebrow">THE JOURNEY TO TREASURE ISLAND</span>
-      <div class="hero-title">Crafting Immersive Games,<br>Delivering Real Value</div>
+      <span class="hero-eyebrow">CRAFTING IMMERSIVE GAMES · DELIVERING REAL VALUE</span>
+      <div class="hero-title">The Journey to<br>Treasure Island</div>
     </div>
 
     <svg class="route" id="route-svg" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
@@ -658,7 +661,7 @@ body.panel-open .stage{
         fill="none" stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-dasharray="2 14" stroke-linecap="round"/>
     </svg>
 
-    <!-- Positions set in JS from chops layout (art-space → screen cover fit) -->
+    <!-- Positions set in JS from scene/ui layout (art-space → screen cover fit) -->
     <button class="hotspot" data-spot="1" onclick="openPanel(1)" aria-label="Casino Games Development">
       <div class="hotspot-inner">
         <div class="isle"><span class="badge">01</span></div>
@@ -857,10 +860,10 @@ function closePanel(){
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel(); });
 
-/** Apply ALL UI chrome from assets/chops-002/layout.json — CSS no longer hardcodes sizes. */
-(async function applyChops002Layout(){
+/** Apply ALL UI chrome from assets/ui/layout.json — CSS no longer hardcodes sizes. */
+(async function applyUiLayout(){
   try{
-    const res = await fetch('assets/chops-002/layout.json?v=20260715n');
+    const res = await fetch('assets/ui/layout.json?v=20260715ad');
     if(!res.ok) return;
     const cfg = await res.json();
     const artW = cfg.uiArtWidth || 1920;
@@ -880,7 +883,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     const t = cfg.title || {};
     const scale = t.scale == null ? 1 : Number(t.scale);
     const tw = (t.w || 800) * scale;
-    // Visible wood height (~230); full PNG is 320 with empty transparent bottom.
+    // Visible wood height; prefer explicit h from layout.
     const th = t.h || 230;
     const tArtW = t.w || 800;
     const cx = (t.x || 0) + tArtW / 2;
@@ -896,12 +899,20 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     root.style.setProperty('--title-pad-x', `${t.paddingXPct ?? 11}%`);
     root.style.setProperty('--title-pad-bottom', `${padBottomW}%`);
     root.style.setProperty('--title-gap', `${t.gapPx ?? 3}px`);
+    if (t.file) {
+      const titleEl = document.querySelector('.hero-copy');
+      if (titleEl) {
+        const titleUrl = t.file.startsWith('assets/') ? t.file : `assets/ui/${t.file}`;
+        titleEl.style.backgroundImage = `url('${titleUrl.replace(/ /g, '%20')}')`;
+      }
+    }
     const eyebrow = t.eyebrow || {};
     const headline = t.headline || {};
     root.style.setProperty('--title-eyebrow-min', `${eyebrow.minPx ?? 8}px`);
     root.style.setProperty('--title-eyebrow-vw', `${eyebrow.vw ?? 0.72}vw`);
     root.style.setProperty('--title-eyebrow-max', `${eyebrow.maxPx ?? 11}px`);
     root.style.setProperty('--title-eyebrow-tracking', `${eyebrow.letterSpacingPx ?? 1.5}px`);
+    root.style.setProperty('--title-eyebrow-offset-x', `${eyebrow.offsetX ?? -40}px`);
     root.style.setProperty('--title-headline-min', `${headline.minPx ?? 13}px`);
     root.style.setProperty('--title-headline-vw', `${headline.vw ?? 1.35}vw`);
     root.style.setProperty('--title-headline-max', `${headline.maxPx ?? 22}px`);
@@ -952,12 +963,12 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     root.style.setProperty('--footer-max-px', `${foot.maxWidthPx ?? 420}px`);
     root.style.setProperty('--footer-max-vw', `${foot.maxWidthVw ?? 86}vw`);
   }catch(err){
-    console.warn('chops-002 layout config failed', err);
+    console.warn('ui layout config failed', err);
   }
 })();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="island-scene.js?v=20260715n"></script>
+<script src="island-scene.js?v=20260715ae"></script>
 </body>
 </html>

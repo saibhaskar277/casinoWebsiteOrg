@@ -1,0 +1,33 @@
+{
+  "artWidth": 1920,
+  "artHeight": 1080,
+  "notes": "Scene art positions/sizes. Edit x,y,w,h,scale per prop. Reload page after save. scale 1 = native.",
+  "viewZoom": 1,
+  "landmarkGrow": 1.2,
+  "layers": {
+    "bg": { "file": "bg.png", "x": 0, "y": 0, "w": 1920, "h": 1080, "scale": 1 },
+    "clouds": { "file": "clouds.png", "x": 0, "y": -55, "w": 1920, "h": 417, "scale": 1, "scaleX": 1.3, "scaleY": 1.08 },
+    "water": { "file": "water.png", "x": 0, "y": 380, "w": 1920, "h": 530, "scale": 1 },
+    "shadow": { "file": "shadow.png", "x": 0, "y": 0, "w": 1920, "h": 1080, "scale": 1 }
+  },
+  "props": {
+    "shipFar": { "file": "ship-far.png", "x": 765, "y": 387, "w": 97, "h": 90, "scale": 1 },
+    "mountain": { "file": "mountain.png", "x": 1282, "y": 172, "w": 592, "h": 397, "scale": 0.9 },
+    "waterfall": { "file": "waterfall.png", "x": 1485, "y": 340, "w": 83, "h": 160, "scale": 0.9 },
+    "waterfallSpray": { "file": "waterfall-spray.png", "x": 1397, "y": 446, "w": 113, "h": 63, "scale": 0.9 },
+    "mountainWaves": { "file": "mountain-waves.png", "x": 1296, "y": 457, "w": 581, "h": 140, "scale": 0.9 },
+    "wake": { "file": "wake.png", "x": 189, "y": 498, "w": 314, "h": 86, "scale": 1 },
+    "village": { "file": "village.png", "x": 691, "y": 418, "w": 540, "h": 299, "scale": 1 },
+    "ship": { "file": "ship.png", "x": 210, "y": 182, "w": 260, "h": 378, "scale": 1 },
+    "fort": { "file": "fort.png", "x": 1097, "y": 471, "w": 789, "h": 397, "scale": 1 },
+    "fortWaves": { "file": "fort-waves.png", "x": 1236, "y": 705, "w": 511, "h": 154, "scale": 1 },
+    "treasure": { "file": "treasure.png", "x": 125, "y": 638, "w": 506, "h": 273, "scale": 1 },
+    "palmL": { "file": "palm-left.png", "x": 0, "y": 0, "w": 749, "h": 380, "scale": 1, "grow": 1.1, "margin": 0.05 },
+    "palmR2": { "file": "palm-right-2.png", "x": 1386, "y": 0, "w": 534, "h": 233, "scale": 1, "grow": 1.1, "margin": 0.05 },
+    "palmR1": { "file": "palm-right-1.png", "x": 1734, "y": 0, "w": 186, "h": 328, "scale": 1, "grow": 1.12, "margin": 0.06 }
+  },
+  "overlays": {
+    "overlayL": { "file": "overlay-left.png", "x": 0, "y": 551, "w": 426, "h": 529, "scale": 1, "grow": 1.12, "margin": 0.035 },
+    "overlayR": { "file": "overlay-right.png", "x": 1250, "y": 503, "w": 670, "h": 577, "scale": 1, "grow": 1.12, "margin": 0.035 }
+  }
+}

@@ -32,10 +32,9 @@ jobs:
           cp index.html island-scene.js _site/
           cp -r assets _site/assets
           if [ -f CNAME ]; then cp CNAME _site/CNAME; fi
-          rm -rf _site/assets/island
-          rm -f _site/assets/chops_001/_aligned_preview.png \
-                "_site/assets/chops_001/web page ref.jpg" \
-                _site/assets/chops_001/locate_layers.py
+          # Drop reference layouts / tooling if present
+          rm -f _site/assets/scene/web-layout.jpg \
+                _site/assets/ui/web-layout.jpg
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

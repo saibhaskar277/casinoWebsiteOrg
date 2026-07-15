@@ -5,9 +5,3 @@ Thumbs.db
 .idea/
 __pycache__/
 *.pyc
-
-# Local / build artifacts (not needed to host the site)
-assets/chops_001/_aligned_preview.png
-assets/chops_001/web page ref.jpg
-assets/chops_001/locate_layers.py
-assets/island/generate_placeholders.py

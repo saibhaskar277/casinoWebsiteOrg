@@ -1,39 +1,39 @@
 /**
  * Quills Studios — Treasure Island scene
- * Composites assets/chops_001 layers using layout.json (matched to reference).
+ * Composites assets/scene layers using layout.json.
  */
 (function () {
   'use strict';
 
-  let ART_W = 1200;
+  let ART_W = 1920;
   let ART_H = 1080;
   /** Exact cover prevents resolution-dependent gaps around the illustration. */
   let VIEW_ZOOM = 1;
   let LANDMARK_GROW = 1.2;
-  const CHOPS = 'assets/chops_001/';
+  const SCENE_BASE = 'assets/scene/';
   const MAX_RIPPLES = 8;
-  /** Visible water band in the new full-canvas water.png (art pixels). */
-  const WATER_HIT = { y: 440, h: 500 };
+  /** Visible water band (art pixels). Overridden from layout.layers.water when present. */
+  let WATER_HIT = { y: 380, h: 530 };
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /** Filled from assets/chops_001/layout.json + assets/chops-002/layout.json */
+  /** Filled from assets/scene/layout.json + assets/ui/layout.json */
   let LAYOUT = null;
   let HOTSPOTS = {
-    1: { x: 284, y: 510, anchorY: 0.42 },
-    2: { x: 1000, y: 362, anchorY: 0.42 },
-    3: { x: 600, y: 645, anchorY: 0.42 },
-    4: { x: 244, y: 805, anchorY: 0.42 },
-    5: { x: 878, y: 818, anchorY: 0.42 },
+    1: { x: 429, y: 510, anchorY: 0.42 },
+    2: { x: 1670, y: 382, anchorY: 0.42 },
+    3: { x: 960, y: 645, anchorY: 0.42 },
+    4: { x: 390, y: 805, anchorY: 0.42 },
+    5: { x: 1520, y: 753, anchorY: 0.42 },
   };
 
   async function loadConfigs() {
     const [sceneRes, uiRes] = await Promise.all([
-      fetch('assets/chops_001/layout.json?v=20260715n'),
-      fetch('assets/chops-002/layout.json?v=20260715n'),
+      fetch('assets/scene/layout.json?v=20260715x'),
+      fetch('assets/ui/layout.json?v=20260715x'),
     ]);
-    if (!sceneRes.ok) throw new Error('Failed to load chops_001/layout.json');
+    if (!sceneRes.ok) throw new Error('Failed to load assets/scene/layout.json');
     const scene = await sceneRes.json();
-    ART_W = scene.artWidth || 1200;
+    ART_W = scene.artWidth || 1920;
     ART_H = scene.artHeight || 1080;
     VIEW_ZOOM = scene.viewZoom == null ? 1 : Number(scene.viewZoom);
     LANDMARK_GROW = scene.landmarkGrow == null ? 1.2 : Number(scene.landmarkGrow);
@@ -41,6 +41,12 @@
     const layers = scene.layers || {};
     const propsObj = scene.props || {};
     const overlaysObj = scene.overlays || {};
+    if (layers.water) {
+      WATER_HIT = {
+        y: layers.water.y == null ? WATER_HIT.y : Number(layers.water.y),
+        h: layers.water.h == null ? WATER_HIT.h : Number(layers.water.h),
+      };
+    }
     // Draw order for props (back → front)
     const propOrder = [
       'shipFar', 'mountain', 'waterfall', 'waterfallSpray', 'mountainWaves',
@@ -141,11 +147,22 @@
     if (loader) loader.setAttribute('aria-busy', 'false');
   }
 
+  function texUrl(file) {
+    if (!file) return file;
+    let url = file;
+    if (/^(https?:|data:|blob:)/i.test(file) || file.startsWith('/') || file.startsWith('assets/')) {
+      url = file;
+    } else {
+      url = SCENE_BASE + file;
+    }
+    return url.split('/').map((seg) => encodeURIComponent(decodeURIComponent(seg))).join('/');
+  }
+
   function loadTex(file) {
     return new Promise((resolve, reject) => {
       const loader = new THREE.TextureLoader();
       loader.load(
-        CHOPS + file,
+        texUrl(file),
         (tex) => {
           tex.colorSpace = THREE.SRGBColorSpace;
           tex.premultiplyAlpha = false;
@@ -595,6 +612,21 @@
     return tex;
   }
 
+  const BIRD_FILES = [
+    'assets/birds/bird-1.png',
+    'assets/birds/bird-2.png',
+    'assets/birds/bird-3.png',
+  ];
+
+  async function loadBirdTextures() {
+    try {
+      const texes = await Promise.all(BIRD_FILES.map((f) => loadTex(f)));
+      return texes.length ? texes : [makeSeagullTex()];
+    } catch (_) {
+      return [makeSeagullTex()];
+    }
+  }
+
   /** Soft white points — per-particle aFade (0..1) fades them as they fall. */
   function makeSoftPointsMaterial(sizePx, peakOpacity) {
     const mat = new THREE.PointsMaterial({
@@ -897,7 +929,7 @@
     artRoot.add(makePlane(texMap[LAYOUT.water.file], LAYOUT.water, z++, waterMat));
 
     // Framing layers: pivot from an outer corner so grow bleeds into the scene.
-    // sx/sy: -1 left/bottom, +1 right/top. grow/margin come from chops_001/layout.json.
+    // sx/sy: -1 left/bottom, +1 right/top. grow/margin come from assets/scene/layout.json.
     const FRAME_ANCHORS = {
       palmL: { sx: -1, sy: 1 },
       palmR2: { sx: 1, sy: 1 },
@@ -1088,22 +1120,26 @@
       artRoot.add(mistPoints);
     }
 
-    // Seagulls
-    const birdTex = makeSeagullTex();
+    // Birds — assets/birds sprites; fall back to drawn seagull.
+    const birdTexes = await loadBirdTextures();
     const birdPaths = [
       { cx: -0.45, cy: 0.42, rx: 0.16, ry: 0.07, speed: 0.32, phase: 0 },
       { cx: 0.35, cy: 0.48, rx: 0.2, ry: 0.08, speed: 0.26, phase: 1.2 },
       { cx: 0.1, cy: 0.55, rx: 0.22, ry: 0.05, speed: 0.2, phase: 2.4 },
       { cx: -0.2, cy: 0.5, rx: 0.18, ry: 0.06, speed: 0.28, phase: 0.7 },
     ];
-    birdPaths.forEach((path) => {
+    birdPaths.forEach((path, i) => {
       const mat = new THREE.MeshBasicMaterial({
-        map: birdTex,
+        map: birdTexes[i % birdTexes.length],
         transparent: true,
         depthWrite: false,
+        side: THREE.DoubleSide,
       });
-      const bird = new THREE.Mesh(new THREE.PlaneGeometry(0.045, 0.03), mat);
+      const bird = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.042), mat);
       bird.userData.path = path;
+      // Sprites face right; flip when velocity is leftward.
+      bird.userData.facesRight = true;
+      bird.userData.baseScaleX = 1;
       // Behind everything except the sky/clouds backdrop (bg z=-5, clouds z=-4).
       bird.position.z = -3.9;
       artRoot.add(bird);
@@ -1132,12 +1168,12 @@
     stage.addEventListener('pointermove', (e) => {
       const art = screenToArt(e.clientX, e.clientY);
       if (art.x < 0 || art.y < 0 || art.x > ART_W || art.y > ART_H) return;
-      // Water hit band in art space; UVs are full-canvas (water.png maps 0..1 over ART).
+      // Water hit band in art space; UVs map across the water layer plane.
       const wy = WATER_HIT.y;
       const wh = WATER_HIT.h;
       if (art.y >= wy && art.y <= wy + wh && waterMat) {
         const u = art.x / ART_W;
-        const v = 1 - art.y / ART_H;
+        const v = 1 - (art.y - wy) / wh;
         waterMat.userData.uMouse.value.set(u, v);
         const now = performance.now();
         if (!reducedMotion && now - lastRipple > 280) {
@@ -1153,7 +1189,7 @@
       const wh = WATER_HIT.h;
       if (art.y >= wy && art.y <= wy + wh) {
         const u = art.x / ART_W;
-        const v = 1 - art.y / ART_H;
+        const v = 1 - (art.y - wy) / wh;
         pushRipple(u, Math.min(1, Math.max(0, v)), 0.4);
       }
     });
@@ -1276,8 +1312,14 @@
         const a = t * p.speed + p.phase;
         bird.position.x = p.cx + Math.cos(a) * p.rx;
         bird.position.y = p.cy + Math.sin(a) * p.ry;
-        bird.scale.x = Math.cos(a) >= 0 ? 1 : -1;
-        bird.scale.y = 1 + Math.sin(t * 9 + p.phase) * 0.12;
+        // Face travel direction (sprites are drawn head-to-the-right).
+        // x velocity on the ellipse: dx/dt = -sin(a) * rx * speed
+        const vx = -Math.sin(a) * p.rx * p.speed;
+        if (Math.abs(vx) > 1e-4) {
+          const base = bird.userData.baseScaleX || 1;
+          // Moving right → no flip; moving left → flip so head leads.
+          bird.scale.x = vx > 0 ? base : -base;
+        }
       });
     }
 
