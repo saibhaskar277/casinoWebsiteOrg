@@ -623,27 +623,27 @@ body.panel-open .stage{
 
   /* Keep hero board readable and inside the screen. */
   .hero-copy{
-    width:min(var(--title-width, 88%), 92vw) !important;
-    max-width:92vw;
+    width:min(var(--title-width, 84%), 90vw) !important;
+    max-width:90vw;
   }
   .hero-eyebrow{
     white-space:normal;
-    letter-spacing:0.6px;
-    transform:translateX(var(--title-eyebrow-offset-x, -10px));
-    font-size:clamp(6.5px, 2.1vw, var(--title-eyebrow-max, 8px));
+    letter-spacing:0.5px;
+    transform:translateX(var(--title-eyebrow-offset-x, -8px));
+    font-size:clamp(6px, 2vw, var(--title-eyebrow-max, 7.5px));
   }
   .hero-title{
-    font-size:clamp(12px, 4.2vw, var(--title-headline-max, 16px));
+    font-size:clamp(11px, 3.8vw, var(--title-headline-max, 14px));
     line-height:1.08;
   }
 
   /* Compact chrome so art + hotspots stay visible. */
   .topbar{
-    padding:var(--topbar-pad-y, 10px) var(--topbar-pad-x, 12px);
+    padding:var(--topbar-pad-y, 8px) var(--topbar-pad-x, 10px);
   }
   .footer-tag{
-    font-size:var(--footer-font, 10px);
-    bottom:var(--footer-bottom, 10px);
+    font-size:var(--footer-font, 9.5px);
+    bottom:var(--footer-bottom, 8px);
     width:min(var(--footer-max-px, 560px), var(--footer-max-vw, 94vw));
   }
 
@@ -654,6 +654,21 @@ body.panel-open .stage{
     right:50%;
     transform:translate(14%, 0);
     padding:var(--tb-pad-top, 16%) var(--tb-pad-left, 26%) var(--tb-pad-bottom, 16%) var(--tb-pad-x, 10%);
+  }
+
+  /* Section 1–5 labels — readable like title type. */
+  .hotspot .isle{
+    width:clamp(44px, 12vw, 62px) !important;
+  }
+  .hotspot .tag{
+    width:clamp(118px, 34vw, 168px) !important;
+    font-size:clamp(11px, 3.5vw, 14px) !important;
+    line-height:1.12;
+    font-weight:800;
+    letter-spacing:0.2px;
+  }
+  .hotspot .badge{
+    font-size:clamp(11px, 3.2vw, 15px) !important;
   }
 
   @keyframes bob{
@@ -903,7 +918,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 /** Apply ALL UI chrome from assets/ui/layout.json — CSS no longer hardcodes sizes. */
 (async function applyUiLayout(){
   try{
-    const res = await fetch('assets/ui/layout.json?v=20260715af');
+    const res = await fetch('assets/ui/layout.json?v=20260715ah');
     if(!res.ok) return;
     const cfg = await res.json();
     const artW = cfg.uiArtWidth || 1920;
@@ -969,9 +984,14 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 
     let nScale = (cfg.numberBoard && cfg.numberBoard.scale != null) ? Number(cfg.numberBoard.scale) : 1;
     let tScale = (cfg.textBoard && cfg.textBoard.scale != null) ? Number(cfg.textBoard.scale) : 1;
+    let textFontScale = tScale;
+    let badgeFontScale = nScale;
     if (isMobile) {
-      nScale *= mob.numberBoardScale == null ? 0.52 : Number(mob.numberBoardScale);
-      tScale *= mob.textBoardScale == null ? 0.48 : Number(mob.textBoardScale);
+      nScale *= mob.numberBoardScale == null ? 0.78 : Number(mob.numberBoardScale);
+      tScale *= mob.textBoardScale == null ? 0.82 : Number(mob.textBoardScale);
+      // Keep label type readable (near title size) — do not crush fonts with board scale.
+      textFontScale = mob.textFontScale == null ? 1.15 : Number(mob.textFontScale);
+      badgeFontScale = mob.badgeFontScale == null ? 1.1 : Number(mob.badgeFontScale);
     }
 
     const nb = cfg.numberBoard || {};
@@ -979,18 +999,18 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     root.style.setProperty('--nb-min', `${(nb.minPx ?? 56) * nScale}px`);
     root.style.setProperty('--nb-vw', `${(nb.widthVw ?? 6.5) * nScale}vw`);
     root.style.setProperty('--nb-max', `${(nb.maxPx ?? 84) * nScale}px`);
-    root.style.setProperty('--nb-badge-min', `${(nb.badgeMinPx ?? 11) * nScale}px`);
-    root.style.setProperty('--nb-badge-vw', `${(nb.badgeVw ?? 1.25) * nScale}vw`);
-    root.style.setProperty('--nb-badge-max', `${(nb.badgeMaxPx ?? 17) * nScale}px`);
+    root.style.setProperty('--nb-badge-min', `${(nb.badgeMinPx ?? 11) * badgeFontScale}px`);
+    root.style.setProperty('--nb-badge-vw', `${(nb.badgeVw ?? 1.25) * badgeFontScale}vw`);
+    root.style.setProperty('--nb-badge-max', `${(nb.badgeMaxPx ?? 17) * badgeFontScale}px`);
 
     const tb = cfg.textBoard || {};
     root.style.setProperty('--tb-ratio', `${tb.w || 520} / ${tb.h || 250}`);
     root.style.setProperty('--tb-min', `${(tb.minPx ?? 120) * tScale}px`);
     root.style.setProperty('--tb-vw', `${(tb.widthVw ?? 15) * tScale}vw`);
     root.style.setProperty('--tb-max', `${(tb.maxPx ?? 190) * tScale}px`);
-    root.style.setProperty('--tb-font-min', `${(tb.fontMinPx ?? 9) * tScale}px`);
-    root.style.setProperty('--tb-font-vw', `${(tb.fontVw ?? 0.95) * tScale}vw`);
-    root.style.setProperty('--tb-font-max', `${(tb.fontMaxPx ?? 12.5) * tScale}px`);
+    root.style.setProperty('--tb-font-min', `${(tb.fontMinPx ?? 9) * textFontScale}px`);
+    root.style.setProperty('--tb-font-vw', `${isMobile ? 3.4 : ((tb.fontVw ?? 0.95) * textFontScale)}vw`);
+    root.style.setProperty('--tb-font-max', `${(tb.fontMaxPx ?? 12.5) * textFontScale}px`);
     root.style.setProperty('--tb-pad-top', `${tb.padTopPct ?? 16}%`);
     root.style.setProperty('--tb-pad-x', `${tb.padXPct ?? 10}%`);
     root.style.setProperty('--tb-pad-left', `${tb.padLeftPct ?? 26}%`);
@@ -1017,6 +1037,6 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="island-scene.js?v=20260715af"></script>
+<script src="island-scene.js?v=20260715ah"></script>
 </body>
 </html>
