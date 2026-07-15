@@ -35,8 +35,7 @@ jobs:
           rm -rf _site/assets/island
           rm -f _site/assets/chops_001/_aligned_preview.png \
                 "_site/assets/chops_001/web page ref.jpg" \
-                _site/assets/chops_001/locate_layers.py \
-                _site/assets/chops_001/layout.json
+                _site/assets/chops_001/locate_layers.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

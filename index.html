@@ -139,7 +139,7 @@ body.is-ready .stage{
   pointer-events:auto;
 }
 
-/* ---------- TOP BAR ---------- */
+/* ---------- TOP BAR (assets/chops-002/layout.json → topbar) ---------- */
 .topbar{
   position:absolute;
   top:0; left:0; right:0;
@@ -147,7 +147,7 @@ body.is-ready .stage{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:18px 26px;
+  padding:var(--topbar-pad-y, 18px) var(--topbar-pad-x, 26px);
   pointer-events:none;
 }
 .logo{
@@ -157,14 +157,14 @@ body.is-ready .stage{
   pointer-events:auto;
 }
 .logo .quill{
-  font-size:26px;
+  font-size:var(--topbar-quill, 26px);
   transform:rotate(-15deg);
   filter:drop-shadow(0 2px 3px rgba(0,0,0,.25));
 }
 .logo-text{
   font-family:'Fraunces', serif;
   font-weight:700;
-  font-size:19px;
+  font-size:var(--topbar-logo, 19px);
   color:var(--cream);
   letter-spacing:.3px;
   text-shadow:0 2px 8px rgba(14,47,66,.55);
@@ -174,7 +174,7 @@ body.is-ready .stage{
   display:block;
   font-family:'Nunito',sans-serif;
   font-weight:700;
-  font-size:10px;
+  font-size:var(--topbar-logo-sub, 10px);
   letter-spacing:2.5px;
   color:var(--gold);
   text-shadow:none;
@@ -192,10 +192,10 @@ body.is-ready .stage{
   backdrop-filter:blur(6px);
   border:1px solid rgba(255,255,255,.25);
   color:var(--cream);
-  padding:9px 14px;
+  padding:var(--topbar-btn-pad-y, 9px) var(--topbar-btn-pad-x, 14px);
   border-radius:999px;
   font-weight:700;
-  font-size:13px;
+  font-size:var(--topbar-btn-font, 13px);
   text-decoration:none;
   transition:transform .15s ease, background .15s ease;
 }
@@ -209,112 +209,154 @@ body.is-ready .stage{
   .contact-btn{padding:9px 11px;}
 }
 
-/* ---------- HERO TITLE ---------- */
+/* ---------- HERO TITLE (driven by assets/chops-002/layout.json → title) ---------- */
+/* Board PNG is 800x320 but wood only fills ~top 230px; box clips the empty bottom. */
 .hero-copy{
   position:absolute;
-  top:78px;
-  left:50%;
+  top:var(--title-top, 2.2%);
+  left:var(--title-left, 50%);
   transform:translateX(-50%);
   text-align:center;
   z-index:20;
-  width:min(640px, 88vw);
+  width:var(--title-width, 39.6%);
+  aspect-ratio:var(--title-ratio, 800 / 230);
+  height:auto;
+  padding:var(--title-pad-top, 4%) var(--title-pad-x, 11%) var(--title-pad-bottom, 4.6%);
+  background:url('assets/chops-002/TITLE%20BOARD.png') top center / 100% auto no-repeat;
   pointer-events:none;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:var(--title-gap, 3px);
+  box-sizing:border-box;
+  overflow:hidden;
 }
 .hero-eyebrow{
   font-family:'Nunito',sans-serif;
   font-weight:800;
-  font-size:11px;
-  letter-spacing:3px;
-  color:var(--wood-dark);
-  background:rgba(255,247,230,.85);
-  display:inline-block;
-  padding:5px 14px;
-  border-radius:999px;
-  margin-bottom:10px;
+  font-size:clamp(var(--title-eyebrow-min, 8px), var(--title-eyebrow-vw, 0.72vw), var(--title-eyebrow-max, 11px));
+  letter-spacing:var(--title-eyebrow-tracking, 1.5px);
+  color:rgba(255,247,230,.95);
+  background:transparent;
+  display:block;
+  padding:0;
+  margin:0;
+  text-shadow:0 2px 6px rgba(14,47,66,.55);
+  max-width:100%;
+  line-height:1.15;
+  white-space:nowrap;
 }
 .hero-title{
   font-family:'Fraunces', serif;
   font-weight:900;
-  font-size:clamp(28px, 5vw, 46px);
+  font-size:clamp(var(--title-headline-min, 13px), var(--title-headline-vw, 1.35vw), var(--title-headline-max, 22px));
   color:var(--cream);
-  text-shadow:0 3px 0 rgba(107,69,34,.4), 0 10px 20px rgba(14,47,66,.35);
-  line-height:1.05;
+  text-shadow:0 2px 0 rgba(107,69,34,.45), 0 6px 12px rgba(14,47,66,.35);
+  line-height:1.18;
+  max-width:100%;
+  margin:0;
+  text-wrap:balance;
 }
-.hero-sub{
-  margin-top:10px;
-  font-size:14px;
-  font-weight:700;
-  color:var(--cream);
-  text-shadow:0 2px 6px rgba(14,47,66,.5);
-  letter-spacing:.3px;
-}
+.hero-sub{ display:none; }
 
-/* ---------- HOTSPOTS ---------- */
+/* ---------- HOTSPOTS (chops-002 number + text boards) ---------- */
+/* Layout matches reference: circle medallion on the LEFT, text board BEHIND it
+   extending to the right. Hotspot is positioned by its circle center (x,y). */
 .hotspot{
   position:absolute;
   z-index:25;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
   background:none;
   border:none;
   cursor:pointer;
   font-family:inherit;
-  transform:translate(-50%, -50%);
+  /* transform set inline (translate -50%,-50%) — origin is the circle center */
   will-change:left, top;
 }
 .hotspot-inner{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
+  position:relative;
+  display:inline-block;
   animation:bob 4.5s ease-in-out infinite;
 }
 .hotspot .isle{
   position:relative;
-  width:72px; height:72px;
-  border-radius:50%;
-  background:rgba(255,247,230,.15);
-  border:3px solid rgba(255,255,255,.65);
-  box-shadow:var(--shadow), inset 0 0 0 3px rgba(14,47,66,.15);
+  z-index:2;
+  /* Size from layout.json → numberBoard × per-hotspot --spot-nb-scale */
+  width:calc(clamp(var(--nb-min, 56px), var(--nb-vw, 6.5vw), var(--nb-max, 84px)) * var(--spot-nb-scale, 1));
+  aspect-ratio:var(--nb-ratio, 253 / 250);
+  height:auto;
+  border-radius:0;
+  background-color:transparent;
+  background-position:center;
+  background-size:contain;
+  background-repeat:no-repeat;
+  border:none;
+  box-shadow:none;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:28px;
-  backdrop-filter:blur(2px);
-  transition:transform .2s ease, box-shadow .2s ease;
+  font-size:0;
+  color:transparent;
+  backdrop-filter:none;
+  transition:transform .2s ease;
+  flex-shrink:0;
+  filter:drop-shadow(0 4px 8px rgba(14,47,66,.35));
 }
+.hotspot[data-spot="1"] .isle{ background-image:url('assets/chops-002/number%20board-1.png'); }
+.hotspot[data-spot="2"] .isle{ background-image:url('assets/chops-002/number%20board-5.png'); }
+.hotspot[data-spot="3"] .isle{ background-image:url('assets/chops-002/number%20board-4.png'); }
+.hotspot[data-spot="4"] .isle{ background-image:url('assets/chops-002/number%20board-2.png'); }
+.hotspot[data-spot="5"] .isle{ background-image:url('assets/chops-002/number%20board-3.png'); }
 .hotspot:hover .isle, .hotspot:focus-visible .isle{
-  transform:scale(1.09) translateY(-3px);
-  box-shadow:0 16px 34px rgba(14,47,66,.35);
+  transform:scale(1.08) translateY(-2px);
+  box-shadow:none;
 }
 .hotspot .badge{
   position:absolute;
-  top:-6px; left:-6px;
-  width:28px; height:28px;
-  border-radius:50%;
-  background:var(--coral);
-  color:#fff;
+  inset:0;
+  width:auto; height:auto;
+  border-radius:0;
+  background:transparent;
+  color:var(--cream);
   font-family:'JetBrains Mono', monospace;
   font-weight:700;
-  font-size:11px;
+  font-size:clamp(var(--nb-badge-min, 11px), var(--nb-badge-vw, 1.25vw), var(--nb-badge-max, 17px));
   display:flex; align-items:center; justify-content:center;
-  border:2px solid var(--cream);
-  box-shadow:0 4px 10px rgba(14,47,66,.3);
+  border:none;
+  box-shadow:none;
+  text-shadow:0 2px 4px rgba(0,0,0,.45);
+  pointer-events:none;
+  top:0; left:0;
 }
 .hotspot .tag{
-  background:var(--cream);
+  /* Text board sits BEHIND the circle, offset right + half-down so the
+     circle overlaps its top-left (board top ~ mid-circle). */
+  position:absolute;
+  top:50%;
+  left:50%;
+  z-index:1;
+  transform:translate(-14%, 0);
+  /* Size from layout.json → textBoard × per-hotspot --spot-tb-scale */
+  width:calc(clamp(var(--tb-min, 120px), var(--tb-vw, 15vw), var(--tb-max, 190px)) * var(--spot-tb-scale, 1));
+  aspect-ratio:var(--tb-ratio, 520 / 250);
+  height:auto;
+  background:url('assets/chops-002/text%20board.png') center / contain no-repeat;
   color:var(--wood-dark);
   font-weight:800;
-  font-size:12px;
-  line-height:1.2;
-  padding:6px 12px;
-  border-radius:10px;
-  box-shadow:var(--shadow);
+  font-size:calc(clamp(var(--tb-font-min, 9px), var(--tb-font-vw, 0.95vw), var(--tb-font-max, 12.5px)) * var(--spot-tb-scale, 1));
+  line-height:1.15;
+  /* extra left padding clears the overlapping circle */
+  padding:var(--tb-pad-top, 16%) var(--tb-pad-x, 10%) var(--tb-pad-bottom, 16%) var(--tb-pad-left, 26%);
+  border-radius:0;
+  box-shadow:none;
   text-align:center;
-  max-width:130px;
-  border-bottom:3px solid var(--sand-dark);
+  max-width:none;
+  border:none;
+  border-bottom:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
 }
 @keyframes bob{
   0%,100%{ transform:translateY(0);}
@@ -330,27 +372,35 @@ body.is-ready .stage{
 
 .footer-tag{
   position:absolute;
-  bottom:14px; left:50%; transform:translateX(-50%);
+  bottom:var(--footer-bottom, 20px); left:50%; transform:translateX(-50%);
   z-index:22;
   text-align:center;
   color:var(--cream);
   font-weight:700;
-  font-size:12.5px;
+  font-size:var(--footer-font, 12.5px);
+  line-height:1.35;
   text-shadow:0 2px 8px rgba(14,47,66,.6);
-  width:min(420px,86vw);
+  width:min(var(--footer-max-px, 560px), var(--footer-max-vw, 90vw));
+  padding:0 12px;
+  box-sizing:border-box;
   pointer-events:none;
 }
 
-/* ---------- SLIDE PANEL ---------- */
+/* ---------- SLIDE PANEL (overlays homepage — does not resize the stage) ---------- */
 .overlay{
   position:fixed; inset:0;
-  background:rgba(14,47,66,.42);
-  backdrop-filter:blur(2px);
+  background:rgba(14,47,66,.22);
+  backdrop-filter:blur(1px);
   opacity:0; pointer-events:none;
   transition:opacity .38s cubic-bezier(.22,.9,.32,1);
   z-index:80;
 }
 .overlay.open{ opacity:1; pointer-events:auto; }
+
+body.panel-open .stage{
+  width:100vw !important;
+  height:100vh !important;
+}
 
 .panel{
   position:fixed;
@@ -563,15 +613,9 @@ body.is-ready .stage{
 .portfolio-card .name{ font-size:11.5px; font-weight:800; margin-top:6px;}
 
 @media(max-width:760px){
-  .hero-copy{ top:64px; }
-  .hero-title{ font-size:22px; }
-  .hotspot .isle{ width:56px; height:56px; font-size:22px;}
-  .hotspot .tag{ font-size:10.5px; padding:5px 9px; max-width:92px;}
-  .footer-tag{ font-size:11px; bottom:8px;}
   body{ --panel-width:100vw; }
-  /* Full-bleed panel covers the stage — keep a light dim behind it. */
   .overlay{
-    background:rgba(14,47,66,.28);
+    background:rgba(14,47,66,.2);
   }
 }
 
@@ -606,7 +650,7 @@ body.is-ready .stage{
 
     <div class="hero-copy">
       <span class="hero-eyebrow">THE JOURNEY TO TREASURE ISLAND</span>
-      <div class="hero-title">Crafting Immersive Games, Delivering Real Value</div>
+      <div class="hero-title">Crafting Immersive Games,<br>Delivering Real Value</div>
     </div>
 
     <svg class="route" id="route-svg" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
@@ -617,35 +661,35 @@ body.is-ready .stage{
     <!-- Positions set in JS from chops layout (art-space → screen cover fit) -->
     <button class="hotspot" data-spot="1" onclick="openPanel(1)" aria-label="Casino Games Development">
       <div class="hotspot-inner">
-        <div class="isle"><span class="badge">01</span>⛵</div>
+        <div class="isle"><span class="badge">01</span></div>
         <div class="tag">Casino Games Development</div>
       </div>
     </button>
 
     <button class="hotspot" data-spot="2" style="animation-delay:-1s;" onclick="openPanel(2)" aria-label="Casual and Hyper Casual Games">
       <div class="hotspot-inner" style="animation-delay:-1s;">
-        <div class="isle"><span class="badge" style="background:#7B5CFF;">02</span>🏝️</div>
+        <div class="isle"><span class="badge">02</span></div>
         <div class="tag">Casual &amp; Hyper Casual Games</div>
       </div>
     </button>
 
     <button class="hotspot" data-spot="3" onclick="openPanel(3)" aria-label="About Our Team">
       <div class="hotspot-inner" style="animation-delay:-2s;">
-        <div class="isle"><span class="badge" style="background:#2FAE6A;">03</span>🏘️</div>
+        <div class="isle"><span class="badge">03</span></div>
         <div class="tag">About Our Team</div>
       </div>
     </button>
 
     <button class="hotspot" data-spot="4" onclick="openPanel(4)" aria-label="Our Technology and Services">
       <div class="hotspot-inner" style="animation-delay:-1.5s;">
-        <div class="isle"><span class="badge" style="background:#C0392B;">04</span>💰</div>
+        <div class="isle"><span class="badge">04</span></div>
         <div class="tag">Our Technology &amp; Services</div>
       </div>
     </button>
 
     <button class="hotspot" data-spot="5" onclick="openPanel(5)" aria-label="Our Portfolio and Clients">
       <div class="hotspot-inner" style="animation-delay:-3s;">
-        <div class="isle"><span class="badge" style="background:#1E88C8;">05</span>🗼</div>
+        <div class="isle"><span class="badge">05</span></div>
         <div class="tag">Our Portfolio &amp; Clients</div>
       </div>
     </button>
@@ -812,9 +856,108 @@ function closePanel(){
   document.body.classList.remove('panel-open');
 }
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel(); });
+
+/** Apply ALL UI chrome from assets/chops-002/layout.json — CSS no longer hardcodes sizes. */
+(async function applyChops002Layout(){
+  try{
+    const res = await fetch('assets/chops-002/layout.json?v=20260715n');
+    if(!res.ok) return;
+    const cfg = await res.json();
+    const artW = cfg.uiArtWidth || 1920;
+    const artH = cfg.uiArtHeight || 1080;
+    const root = document.documentElement;
+
+    const top = cfg.topbar || {};
+    root.style.setProperty('--topbar-pad-y', `${top.paddingY ?? 18}px`);
+    root.style.setProperty('--topbar-pad-x', `${top.paddingX ?? 26}px`);
+    root.style.setProperty('--topbar-logo', `${top.logoFontPx ?? 19}px`);
+    root.style.setProperty('--topbar-logo-sub', `${top.logoSubPx ?? 10}px`);
+    root.style.setProperty('--topbar-quill', `${top.quillPx ?? 26}px`);
+    root.style.setProperty('--topbar-btn-font', `${top.btnFontPx ?? 13}px`);
+    root.style.setProperty('--topbar-btn-pad-y', `${top.btnPadY ?? 9}px`);
+    root.style.setProperty('--topbar-btn-pad-x', `${top.btnPadX ?? 14}px`);
+
+    const t = cfg.title || {};
+    const scale = t.scale == null ? 1 : Number(t.scale);
+    const tw = (t.w || 800) * scale;
+    // Visible wood height (~230); full PNG is 320 with empty transparent bottom.
+    const th = t.h || 230;
+    const tArtW = t.w || 800;
+    const cx = (t.x || 0) + tArtW / 2;
+    // CSS % padding is width-based; convert vertical pads from % of board height.
+    const titleHOverW = th / tArtW;
+    const padTopW = (t.paddingTopPct ?? 14) * titleHOverW;
+    const padBottomW = (t.paddingBottomPct ?? 16) * titleHOverW;
+    root.style.setProperty('--title-top', `${((t.y || 0) / artH) * 100}%`);
+    root.style.setProperty('--title-left', `${(cx / artW) * 100}%`);
+    root.style.setProperty('--title-width', `${(tw / artW) * 100}%`);
+    root.style.setProperty('--title-ratio', `${tArtW} / ${th}`);
+    root.style.setProperty('--title-pad-top', `${padTopW}%`);
+    root.style.setProperty('--title-pad-x', `${t.paddingXPct ?? 11}%`);
+    root.style.setProperty('--title-pad-bottom', `${padBottomW}%`);
+    root.style.setProperty('--title-gap', `${t.gapPx ?? 3}px`);
+    const eyebrow = t.eyebrow || {};
+    const headline = t.headline || {};
+    root.style.setProperty('--title-eyebrow-min', `${eyebrow.minPx ?? 8}px`);
+    root.style.setProperty('--title-eyebrow-vw', `${eyebrow.vw ?? 0.72}vw`);
+    root.style.setProperty('--title-eyebrow-max', `${eyebrow.maxPx ?? 11}px`);
+    root.style.setProperty('--title-eyebrow-tracking', `${eyebrow.letterSpacingPx ?? 1.5}px`);
+    root.style.setProperty('--title-headline-min', `${headline.minPx ?? 13}px`);
+    root.style.setProperty('--title-headline-vw', `${headline.vw ?? 1.35}vw`);
+    root.style.setProperty('--title-headline-max', `${headline.maxPx ?? 22}px`);
+
+    let nScale = (cfg.numberBoard && cfg.numberBoard.scale != null) ? Number(cfg.numberBoard.scale) : 1;
+    let tScale = (cfg.textBoard && cfg.textBoard.scale != null) ? Number(cfg.textBoard.scale) : 1;
+    const mob = cfg.mobile || {};
+    const isMobile = window.matchMedia(`(max-width: ${mob.maxWidthPx || 760}px)`).matches;
+    if (isMobile) {
+      nScale *= mob.numberBoardScale == null ? 0.75 : Number(mob.numberBoardScale);
+      tScale *= mob.textBoardScale == null ? 0.7 : Number(mob.textBoardScale);
+    }
+
+    const nb = cfg.numberBoard || {};
+    root.style.setProperty('--nb-ratio', `${nb.w || 253} / ${nb.h || 250}`);
+    root.style.setProperty('--nb-min', `${(nb.minPx ?? 56) * nScale}px`);
+    root.style.setProperty('--nb-vw', `${(nb.widthVw ?? 6.5) * nScale}vw`);
+    root.style.setProperty('--nb-max', `${(nb.maxPx ?? 84) * nScale}px`);
+    root.style.setProperty('--nb-badge-min', `${(nb.badgeMinPx ?? 11) * nScale}px`);
+    root.style.setProperty('--nb-badge-vw', `${(nb.badgeVw ?? 1.25) * nScale}vw`);
+    root.style.setProperty('--nb-badge-max', `${(nb.badgeMaxPx ?? 17) * nScale}px`);
+
+    const tb = cfg.textBoard || {};
+    root.style.setProperty('--tb-ratio', `${tb.w || 520} / ${tb.h || 250}`);
+    root.style.setProperty('--tb-min', `${(tb.minPx ?? 120) * tScale}px`);
+    root.style.setProperty('--tb-vw', `${(tb.widthVw ?? 15) * tScale}vw`);
+    root.style.setProperty('--tb-max', `${(tb.maxPx ?? 190) * tScale}px`);
+    root.style.setProperty('--tb-font-min', `${(tb.fontMinPx ?? 9) * tScale}px`);
+    root.style.setProperty('--tb-font-vw', `${(tb.fontVw ?? 0.95) * tScale}vw`);
+    root.style.setProperty('--tb-font-max', `${(tb.fontMaxPx ?? 12.5) * tScale}px`);
+    root.style.setProperty('--tb-pad-top', `${tb.padTopPct ?? 16}%`);
+    root.style.setProperty('--tb-pad-x', `${tb.padXPct ?? 10}%`);
+    root.style.setProperty('--tb-pad-left', `${tb.padLeftPct ?? 26}%`);
+    root.style.setProperty('--tb-pad-bottom', `${tb.padBottomPct ?? 12}%`);
+
+    const spots = cfg.hotspots || {};
+    Object.keys(spots).forEach((id) => {
+      const el = document.querySelector(`.hotspot[data-spot="${id}"]`);
+      if (!el) return;
+      const h = spots[id];
+      el.style.setProperty('--spot-nb-scale', String(h.numberScale == null ? 1 : h.numberScale));
+      el.style.setProperty('--spot-tb-scale', String(h.textScale == null ? 1 : h.textScale));
+    });
+
+    const foot = cfg.footer || {};
+    root.style.setProperty('--footer-bottom', `${isMobile ? (mob.footerBottomPx ?? 8) : (foot.bottomPx ?? 14)}px`);
+    root.style.setProperty('--footer-font', `${isMobile ? (mob.footerFontPx ?? 11) : (foot.fontPx ?? 12.5)}px`);
+    root.style.setProperty('--footer-max-px', `${foot.maxWidthPx ?? 420}px`);
+    root.style.setProperty('--footer-max-vw', `${foot.maxWidthVw ?? 86}vw`);
+  }catch(err){
+    console.warn('chops-002 layout config failed', err);
+  }
+})();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="island-scene.js?v=20260714i"></script>
+<script src="island-scene.js?v=20260715n"></script>
 </body>
 </html>

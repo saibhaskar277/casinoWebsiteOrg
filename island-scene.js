@@ -5,54 +5,77 @@
 (function () {
   'use strict';
 
-  const ART_W = 1200;
-  const ART_H = 1080;
+  let ART_W = 1200;
+  let ART_H = 1080;
   /** Exact cover prevents resolution-dependent gaps around the illustration. */
-  const VIEW_ZOOM = 1;
+  let VIEW_ZOOM = 1;
+  let LANDMARK_GROW = 1.2;
   const CHOPS = 'assets/chops_001/';
   const MAX_RIPPLES = 8;
+  /** Visible water band in the new full-canvas water.png (art pixels). */
+  const WATER_HIT = { y: 440, h: 500 };
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /** Pixel layout from template-match against web page ref.jpg */
-  const LAYOUT = {
-    bg: { file: '_0015_Layer-7.png', x: 0, y: 0, w: 1200, h: 1080 },
-    clouds: { file: '_0014_Layer-8.png', x: 0, y: 88, w: 1200, h: 346 },
-    water: { file: '_0013_water-Alpha.png', x: 0, y: 402, w: 1200, h: 542 },
-    shadow: { file: '_0000_shadow.png', x: 0, y: 0, w: 1200, h: 1080 },
-    props: [
-      { file: '_0012_ship_02.png', x: 460, y: 387, w: 97, h: 90, id: 'shipFar' },
-      { file: '_0007_mountain-without-waterfall.png', x: 680, y: 170, w: 515, h: 340, id: 'mountain' },
-      { file: '_0007_waterfall-01.png', x: 858, y: 292, w: 95, h: 194, id: 'waterfall' },
-      { file: '_0007_waterfall-02.png', x: 801, y: 413, w: 117, h: 66, id: 'waterfallSpray' },
-      { file: 'mountain-waves.png', x: 652, y: 426, w: 581, h: 140, id: 'mountainWaves' },
-      { file: '_0009_Layer-2.png', x: 61, y: 494, w: 310, h: 93, id: 'wake' },
-      { file: '_0006_Layer-4.png', x: 397, y: 455, w: 407, h: 226, id: 'village' },
-      { file: '_0010_ship.png', x: 57, y: 194, w: 311, h: 355, id: 'ship' },
-      { file: '_0008_fort.png', x: 671, y: 617, w: 378, h: 235, id: 'fort' },
-      { file: 'fort-waves.png', x: 605, y: 770, w: 511, h: 154, id: 'fortWaves' },
-      { file: '_0011_treasure-box.png', x: 43, y: 651, w: 386, h: 247, id: 'treasure' },
-      { file: '_0005_palm-tree-branch_03-left.png', x: 0, y: 0, w: 592, h: 321, id: 'palmL' },
-      { file: '_0004_palm-branch-02-right.png', x: 772, y: 0, w: 425, h: 210, id: 'palmR2' },
-      { file: '_0003_palm-branch-01-right.png', x: 1080, y: 57, w: 120, h: 181, id: 'palmR1' },
-    ],
-    // Corner foliage — reference-matched coords; drawn after vignette shadow.
-    overlays: [
-      { file: '_0002_overlay-left.png', x: 0, y: 673, w: 327, h: 407, id: 'overlayL' },
-      { file: '_0001_overlay_right.png', x: 718, y: 402, w: 482, h: 678, id: 'overlayR' },
-    ],
+  /** Filled from assets/chops_001/layout.json + assets/chops-002/layout.json */
+  let LAYOUT = null;
+  let HOTSPOTS = {
+    1: { x: 284, y: 510, anchorY: 0.42 },
+    2: { x: 1000, y: 362, anchorY: 0.42 },
+    3: { x: 600, y: 645, anchorY: 0.42 },
+    4: { x: 244, y: 805, anchorY: 0.42 },
+    5: { x: 878, y: 818, anchorY: 0.42 },
   };
 
-  /**
-   * Hotspot anchors in art pixels — matched to web page ref landmarks,
-   * nudging toward wooden-sign placements from the UI layout ref.
-   */
-  const HOTSPOTS = {
-    1: { x: 200, y: 300 }, // ship / casino
-    2: { x: 820, y: 340 }, // waterfall / casual
-    3: { x: 600, y: 540 }, // village / team
-    4: { x: 230, y: 780 }, // treasure / tech
-    5: { x: 860, y: 700 }, // fort / portfolio
-  };
+  async function loadConfigs() {
+    const [sceneRes, uiRes] = await Promise.all([
+      fetch('assets/chops_001/layout.json?v=20260715n'),
+      fetch('assets/chops-002/layout.json?v=20260715n'),
+    ]);
+    if (!sceneRes.ok) throw new Error('Failed to load chops_001/layout.json');
+    const scene = await sceneRes.json();
+    ART_W = scene.artWidth || 1200;
+    ART_H = scene.artHeight || 1080;
+    VIEW_ZOOM = scene.viewZoom == null ? 1 : Number(scene.viewZoom);
+    LANDMARK_GROW = scene.landmarkGrow == null ? 1.2 : Number(scene.landmarkGrow);
+
+    const layers = scene.layers || {};
+    const propsObj = scene.props || {};
+    const overlaysObj = scene.overlays || {};
+    // Draw order for props (back → front)
+    const propOrder = [
+      'shipFar', 'mountain', 'waterfall', 'waterfallSpray', 'mountainWaves',
+      'wake', 'village', 'ship', 'fort', 'fortWaves', 'treasure',
+      'palmL', 'palmR2', 'palmR1',
+    ];
+    LAYOUT = {
+      bg: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.bg),
+      clouds: Object.assign({ scale: 1, scaleX: 1.3, scaleY: 1.08 }, layers.clouds),
+      water: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.water),
+      shadow: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.shadow),
+      props: propOrder
+        .filter((id) => propsObj[id])
+        .map((id) => Object.assign({ id, scale: 1 }, propsObj[id], { id })),
+      overlays: ['overlayL', 'overlayR']
+        .filter((id) => overlaysObj[id])
+        .map((id) => Object.assign({ id, scale: 1 }, overlaysObj[id], { id })),
+    };
+
+    if (uiRes.ok) {
+      const ui = await uiRes.json();
+      if (ui.hotspots) {
+        Object.keys(ui.hotspots).forEach((id) => {
+          const h = ui.hotspots[id];
+          HOTSPOTS[id] = {
+            x: Number(h.x),
+            y: Number(h.y),
+            anchorY: h.anchorY == null ? 0.42 : Number(h.anchorY),
+            numberScale: h.numberScale == null ? 1 : Number(h.numberScale),
+            textScale: h.textScale == null ? 1 : Number(h.textScale),
+          };
+        });
+      }
+    }
+  }
 
   let renderer, scene, camera, clock;
   let artRoot, view = { scaleX: 1, scaleY: 1, ox: 0, oy: 0 };
@@ -61,10 +84,45 @@
   let waterfallMats = [];
   let palmMeshes = [];
   let mistPoints, dropletPoints, splashPoints, seagulls = [];
+  let landmarkMeshes = [];
   let ripples = [];
   let animId = 0;
   let running = true;
   const propMeshes = {};
+
+  /** Section landmarks that must keep native PNG proportions under stretch-to-fill. */
+  const LANDMARK_IDS = new Set([
+    'ship',
+    'shipFar',
+    'mountain',
+    'waterfall',
+    'waterfallSpray',
+    'mountainWaves',
+    'village',
+    'treasure',
+    'fort',
+    'fortWaves',
+    'wake',
+  ]);
+
+  function syncLandmarkAspect() {
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+    const vw = Math.max(1, stage.clientWidth);
+    const vh = Math.max(1, stage.clientHeight);
+    // Undo non-uniform stretch for these props only: keep sprite pixel aspect = PNG aspect.
+    const sx = (ART_W / ART_H) * (vh / vw);
+    for (let i = 0; i < landmarkMeshes.length; i++) {
+      const mesh = landmarkMeshes[i];
+      const grow = mesh.userData.landmarkGrow || 1;
+      mesh.scale.set(sx * grow, grow, 1);
+    }
+    if (shipShadow) {
+      const grow = shipShadow.userData.landmarkGrow || 1;
+      shipShadow.scale.set(sx * grow, grow, 1);
+      shipShadow.userData.baseScaleX = sx * grow;
+    }
+  }
 
   function setBootProgress(pct, status) {
     const fill = document.getElementById('boot-bar-fill');
@@ -113,6 +171,7 @@
   }
 
   function makePlane(tex, layer, z, material) {
+    const s = layer.scale == null ? 1 : Number(layer.scale);
     const loc = pxToLocal(layer.x, layer.y, layer.w, layer.h);
     const mat =
       material ||
@@ -121,8 +180,9 @@
         transparent: true,
         depthWrite: false,
       });
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(loc.w, loc.h), mat);
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(loc.w * s, loc.h * s), mat);
     mesh.position.set(loc.x, loc.y, z);
+    mesh.userData.propScale = s;
     return mesh;
   }
 
@@ -735,7 +795,10 @@
       const s = artToScreen(h.x, h.y);
       el.style.left = `${s.left}px`;
       el.style.top = `${s.top}px`;
-      el.style.transform = 'translate(-50%, -50%)';
+      // Origin is the circle center; board extends to the right from here.
+      el.style.transform = `translate(-50%, -50%)`;
+      if (h.numberScale != null) el.style.setProperty('--spot-nb-scale', String(h.numberScale));
+      if (h.textScale != null) el.style.setProperty('--spot-tb-scale', String(h.textScale));
     });
   }
 
@@ -765,6 +828,9 @@
       revealSite();
       return;
     }
+
+    setBootProgress(2, 'Reading layout config…');
+    await loadConfigs();
 
     setBootProgress(4, 'Preparing the voyage…');
     if (document.fonts && document.fonts.ready) {
@@ -821,8 +887,8 @@
 
     cloudMesh = makePlane(texMap[LAYOUT.clouds.file], LAYOUT.clouds, z++);
     // Overscan so slow parallax drift never reveals the plane edges against the sky.
-    cloudMesh.scale.x = 1.3;
-    cloudMesh.scale.y = 1.08;
+    cloudMesh.scale.x = LAYOUT.clouds.scaleX == null ? 1.3 : Number(LAYOUT.clouds.scaleX);
+    cloudMesh.scale.y = LAYOUT.clouds.scaleY == null ? 1.08 : Number(LAYOUT.clouds.scaleY);
     cloudMesh.userData.baseX = cloudMesh.position.x;
     cloudMesh.userData.basePosY = cloudMesh.position.y;
     artRoot.add(cloudMesh);
@@ -831,27 +897,28 @@
     artRoot.add(makePlane(texMap[LAYOUT.water.file], LAYOUT.water, z++, waterMat));
 
     // Framing layers: pivot from an outer corner so grow bleeds into the scene.
-    // sx/sy: -1 left/bottom, +1 right/top. Negative margin pulls the pivot on-screen.
+    // sx/sy: -1 left/bottom, +1 right/top. grow/margin come from chops_001/layout.json.
     const FRAME_ANCHORS = {
-      palmL: { sx: -1, sy: 1, grow: 1.1, margin: 0.05 },
-      palmR2: { sx: 1, sy: 1, grow: 1.1, margin: 0.05 },
-      palmR1: { sx: 1, sy: 1, grow: 1.12, margin: 0.06 },
-      // Slight overscan so the hard-cropped leaf edge stays off-screen while leaves sway.
-      overlayL: { sx: -1, sy: -1, grow: 1.12, margin: 0.035 },
-      overlayR: { sx: 1, sy: -1, grow: 1.12, margin: 0.035 },
+      palmL: { sx: -1, sy: 1 },
+      palmR2: { sx: 1, sy: 1 },
+      palmR1: { sx: 1, sy: 1 },
+      overlayL: { sx: -1, sy: -1 },
+      overlayR: { sx: 1, sy: -1 },
     };
 
     function applyFrameAnchor(mesh, p, anchor) {
       const loc = pxToLocal(p.x, p.y, p.w, p.h);
       const hw = loc.w / 2;
       const hh = loc.h / 2;
+      const grow = (p.grow == null ? 1.1 : Number(p.grow)) * (p.scale == null ? 1 : Number(p.scale));
+      const margin = p.margin == null ? 0.05 : Number(p.margin);
       mesh.geometry.translate(-anchor.sx * hw, -anchor.sy * hh, 0);
       mesh.position.set(
-        loc.x + anchor.sx * hw + anchor.sx * anchor.margin,
-        loc.y + anchor.sy * hh + anchor.sy * anchor.margin,
+        loc.x + anchor.sx * hw + anchor.sx * margin,
+        loc.y + anchor.sy * hh + anchor.sy * margin,
         mesh.position.z
       );
-      mesh.scale.set(anchor.grow, anchor.grow, 1);
+      mesh.scale.set(grow, grow, 1);
       mesh.userData.anchored = true;
     }
 
@@ -869,7 +936,8 @@
         mat = makeWaterfallPoolMaterial(texMap[p.file]);
         waterfallMats.push(mat);
       }
-      const mesh = makePlane(texMap[p.file], p, z++, mat);
+      const mesh = makePlane(texMap[p.file], p, z++);
+      if (mat) mesh.material = mat;
       mesh.userData.id = p.id;
 
       const anchor = FRAME_ANCHORS[p.id];
@@ -878,6 +946,10 @@
       mesh.userData.basePos = mesh.position.clone();
       artRoot.add(mesh);
       propMeshes[p.id] = mesh;
+      if (LANDMARK_IDS.has(p.id)) {
+        mesh.userData.landmarkGrow = LANDMARK_GROW * (p.scale == null ? 1 : Number(p.scale));
+        landmarkMeshes.push(mesh);
+      }
       if (p.id === 'ship') shipMesh = mesh;
       if (p.id === 'mountain') mountainMesh = mesh;
       if (p.id.startsWith('palm')) palmMeshes.push(mesh);
@@ -921,8 +993,11 @@
       );
       shipShadow.position.set(shadowLoc.x, shadowLoc.y, shipMesh.position.z - 0.04);
       shipShadow.userData.basePos = shipShadow.position.clone();
+      shipShadow.userData.landmarkGrow = LANDMARK_GROW;
       artRoot.add(shipShadow);
     }
+
+    syncLandmarkAspect();
 
     artRoot.add(makePlane(texMap[LAYOUT.shadow.file], LAYOUT.shadow, z++));
 
@@ -931,8 +1006,11 @@
     LAYOUT.overlays.forEach((p, i) => {
       const side = p.id === 'overlayL' ? -1 : 1;
       const mat = makeOverlayFoliageMaterial(texMap[p.file], side);
-      const loc = pxToLocal(p.x, p.y, p.w, p.h);
+      const s = p.scale == null ? 1 : Number(p.scale);
+      const loc = pxToLocal(p.x, p.y, p.w * s, p.h * s);
       const anchor = FRAME_ANCHORS[p.id];
+      const grow = (p.grow == null ? 1.12 : Number(p.grow)) * s;
+      const margin = p.margin == null ? 0.035 : Number(p.margin);
       const geo = new THREE.PlaneGeometry(loc.w, loc.h, 24, 32);
       if (anchor) {
         geo.translate(-anchor.sx * (loc.w / 2), -anchor.sy * (loc.h / 2), 0);
@@ -945,11 +1023,11 @@
         const hw = loc.w / 2;
         const hh = loc.h / 2;
         mesh.position.set(
-          loc.x + anchor.sx * hw + anchor.sx * anchor.margin,
-          loc.y + anchor.sy * hh + anchor.sy * anchor.margin,
+          loc.x + anchor.sx * hw + anchor.sx * margin,
+          loc.y + anchor.sy * hh + anchor.sy * margin,
           mesh.position.z
         );
-        mesh.scale.set(anchor.grow, anchor.grow, 1);
+        mesh.scale.set(grow, grow, 1);
         mesh.userData.anchored = true;
       }
       mesh.userData.basePos = mesh.position.clone();
@@ -1036,47 +1114,16 @@
     positionHotspots();
     updateRoute();
 
-    // While the stage width animates for the side panel, skip WebGL setSize —
-    // resizing the drawing buffer every frame clears the canvas and looks like a fade.
-    let layoutAnimating = false;
-    const syncLayout = () => {
+    window.addEventListener('resize', () => {
       resize();
       positionHotspots();
       updateRoute();
-    };
-    const syncHotspotsOnly = () => {
-      positionHotspots();
-      updateRoute();
-    };
-
-    stage.addEventListener('transitionrun', (e) => {
-      if (e.propertyName === 'width') layoutAnimating = true;
-    });
-    stage.addEventListener('transitionend', (e) => {
-      if (e.propertyName !== 'width') return;
-      layoutAnimating = false;
-      syncLayout();
-    });
-    stage.addEventListener('transitioncancel', (e) => {
-      if (e.propertyName !== 'width') return;
-      layoutAnimating = false;
-      syncLayout();
-    });
-
-    window.addEventListener('resize', () => {
-      if (layoutAnimating) {
-        syncHotspotsOnly();
-        return;
-      }
-      syncLayout();
     });
     if ('ResizeObserver' in window) {
       const stageObserver = new ResizeObserver(() => {
-        if (layoutAnimating) {
-          syncHotspotsOnly();
-          return;
-        }
-        syncLayout();
+        resize();
+        positionHotspots();
+        updateRoute();
       });
       stageObserver.observe(stage);
     }
@@ -1085,12 +1132,12 @@
     stage.addEventListener('pointermove', (e) => {
       const art = screenToArt(e.clientX, e.clientY);
       if (art.x < 0 || art.y < 0 || art.x > ART_W || art.y > ART_H) return;
-      // Water layer local UV
-      const wy = LAYOUT.water.y;
-      const wh = LAYOUT.water.h;
+      // Water hit band in art space; UVs are full-canvas (water.png maps 0..1 over ART).
+      const wy = WATER_HIT.y;
+      const wh = WATER_HIT.h;
       if (art.y >= wy && art.y <= wy + wh && waterMat) {
         const u = art.x / ART_W;
-        const v = 1 - (art.y - wy) / wh;
+        const v = 1 - art.y / ART_H;
         waterMat.userData.uMouse.value.set(u, v);
         const now = performance.now();
         if (!reducedMotion && now - lastRipple > 280) {
@@ -1102,11 +1149,11 @@
     stage.addEventListener('pointerdown', (e) => {
       if (e.target.closest('.hotspot, .contact-btn, .panel, a, button')) return;
       const art = screenToArt(e.clientX, e.clientY);
-      const wy = LAYOUT.water.y;
-      const wh = LAYOUT.water.h;
+      const wy = WATER_HIT.y;
+      const wh = WATER_HIT.h;
       if (art.y >= wy && art.y <= wy + wh) {
         const u = art.x / ART_W;
-        const v = 1 - (art.y - wy) / wh;
+        const v = 1 - art.y / ART_H;
         pushRipple(u, Math.min(1, Math.max(0, v)), 0.4);
       }
     });
@@ -1151,6 +1198,7 @@
     camera.top = 1;
     camera.bottom = -1;
     camera.updateProjectionMatrix();
+    syncLandmarkAspect();
   }
 
   function animate() {
@@ -1190,7 +1238,8 @@
           shipShadow.position.y = sb.y + heave * 0.003;
           shipShadow.rotation.z = roll * 0.012;
           const lift = (heave + 1) * 0.5; // 0..1
-          shipShadow.scale.x = 1 - lift * 0.06;
+          const baseSx = shipShadow.userData.baseScaleX || 1;
+          shipShadow.scale.x = baseSx * (1 - lift * 0.06);
           shipShadow.material.opacity = 0.5 - lift * 0.12;
         }
         // Wake sits right under the hull, drifting just slightly with the ship.

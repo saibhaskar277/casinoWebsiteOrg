@@ -1,0 +1,128 @@
+{
+  "notes": "Edit THIS file for all on-page UI. Reload after save. Positions use art pixels; scale 1 = 100%. title.h should match visible wood (~230), not full PNG (320 has empty bottom). title.paddingTopPct/BottomPct are % of board height; paddingXPct is % of board width. Scene props live in assets/chops_001/layout.json.",
+  "uiArtWidth": 1920,
+  "uiArtHeight": 1080,
+  "sceneArtWidth": 1200,
+  "sceneArtHeight": 1080,
+
+  "topbar": {
+    "paddingY": 18,
+    "paddingX": 26,
+    "logoFontPx": 19,
+    "logoSubPx": 10,
+    "quillPx": 26,
+    "btnFontPx": 13,
+    "btnPadY": 9,
+    "btnPadX": 14
+  },
+
+  "title": {
+    "file": "TITLE BOARD.png",
+    "x": 480,
+    "y": 24,
+    "w": 800,
+    "h": 230,
+    "scale": 0.95,
+    "paddingTopPct": 15,
+    "paddingXPct": 12,
+    "paddingBottomPct": 15,
+    "gapPx": 4,
+    "eyebrow": {
+      "minPx": 8.4,
+      "vw": 0.76,
+      "maxPx": 11.6,
+      "letterSpacingPx": 1.6
+    },
+    "headline": {
+      "minPx": 13.7,
+      "vw": 1.42,
+      "maxPx": 23.1
+    }
+  },
+
+  "numberBoard": {
+    "w": 253,
+    "h": 250,
+    "scale": 1.05,
+    "widthVw": 6.5,
+    "minPx": 56,
+    "maxPx": 84,
+    "badgeVw": 1.25,
+    "badgeMinPx": 11,
+    "badgeMaxPx": 17
+  },
+
+  "textBoard": {
+    "w": 520,
+    "h": 250,
+    "scale": 1,
+    "widthVw": 14.25,
+    "minPx": 114,
+    "maxPx": 180,
+    "fontVw": 0.9,
+    "fontMinPx": 8.5,
+    "fontMaxPx": 11.9,
+    "padTopPct": 18,
+    "padXPct": 12,
+    "padLeftPct": 28,
+    "padBottomPct": 18
+  },
+
+  "hotspots": {
+    "1": {
+      "label": "Casino Games Development",
+      "x": 284,
+      "y": 510,
+      "numberScale": 1,
+      "textScale": 1,
+      "anchorY": 0.42
+    },
+    "2": {
+      "label": "Casual & Hyper Casual Games",
+      "x": 1000,
+      "y": 362,
+      "numberScale": 1,
+      "textScale": 1,
+      "anchorY": 0.42
+    },
+    "3": {
+      "label": "About Our Team",
+      "x": 600,
+      "y": 645,
+      "numberScale": 1,
+      "textScale": 1,
+      "anchorY": 0.42
+    },
+    "4": {
+      "label": "Our Technology & Services",
+      "x": 244,
+      "y": 805,
+      "numberScale": 1,
+      "textScale": 1,
+      "anchorY": 0.42
+    },
+    "5": {
+      "label": "Our Portfolio & Clients",
+      "x": 878,
+      "y": 818,
+      "numberScale": 1,
+      "textScale": 1,
+      "anchorY": 0.42
+    }
+  },
+
+  "footer": {
+    "bottomPx": 20,
+    "fontPx": 12.5,
+    "maxWidthPx": 560,
+    "maxWidthVw": 90
+  },
+
+  "mobile": {
+    "maxWidthPx": 760,
+    "numberBoardScale": 0.75,
+    "textBoardScale": 0.7,
+    "footerBottomPx": 8,
+    "footerFontPx": 11
+  }
+}
