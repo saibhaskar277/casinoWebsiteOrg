@@ -620,6 +620,46 @@ body.panel-open .stage{
   .overlay{
     background:rgba(14,47,66,.2);
   }
+
+  /* Keep hero board readable and inside the screen. */
+  .hero-copy{
+    width:min(var(--title-width, 88%), 92vw) !important;
+    max-width:92vw;
+  }
+  .hero-eyebrow{
+    white-space:normal;
+    letter-spacing:0.6px;
+    transform:translateX(var(--title-eyebrow-offset-x, -10px));
+    font-size:clamp(6.5px, 2.1vw, var(--title-eyebrow-max, 8px));
+  }
+  .hero-title{
+    font-size:clamp(12px, 4.2vw, var(--title-headline-max, 16px));
+    line-height:1.08;
+  }
+
+  /* Compact chrome so art + hotspots stay visible. */
+  .topbar{
+    padding:var(--topbar-pad-y, 10px) var(--topbar-pad-x, 12px);
+  }
+  .footer-tag{
+    font-size:var(--footer-font, 10px);
+    bottom:var(--footer-bottom, 10px);
+    width:min(var(--footer-max-px, 560px), var(--footer-max-vw, 94vw));
+  }
+
+  /* Right-edge hotspots open their text boards left so they stay on-screen. */
+  .hotspot[data-spot="2"] .tag,
+  .hotspot[data-spot="5"] .tag{
+    left:auto;
+    right:50%;
+    transform:translate(14%, 0);
+    padding:var(--tb-pad-top, 16%) var(--tb-pad-left, 26%) var(--tb-pad-bottom, 16%) var(--tb-pad-x, 10%);
+  }
+
+  @keyframes bob{
+    0%,100%{ transform:translateY(0);}
+    50%{ transform:translateY(-4px);}
+  }
 }
 
 @media (prefers-reduced-motion: reduce){
@@ -863,7 +903,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 /** Apply ALL UI chrome from assets/ui/layout.json — CSS no longer hardcodes sizes. */
 (async function applyUiLayout(){
   try{
-    const res = await fetch('assets/ui/layout.json?v=20260715ad');
+    const res = await fetch('assets/ui/layout.json?v=20260715af');
     if(!res.ok) return;
     const cfg = await res.json();
     const artW = cfg.uiArtWidth || 1920;
@@ -871,17 +911,21 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     const root = document.documentElement;
 
     const top = cfg.topbar || {};
-    root.style.setProperty('--topbar-pad-y', `${top.paddingY ?? 18}px`);
-    root.style.setProperty('--topbar-pad-x', `${top.paddingX ?? 26}px`);
-    root.style.setProperty('--topbar-logo', `${top.logoFontPx ?? 19}px`);
-    root.style.setProperty('--topbar-logo-sub', `${top.logoSubPx ?? 10}px`);
-    root.style.setProperty('--topbar-quill', `${top.quillPx ?? 26}px`);
+    const mob = cfg.mobile || {};
+    const isMobile = window.matchMedia(`(max-width: ${mob.maxWidthPx || 760}px)`).matches;
+
+    root.style.setProperty('--topbar-pad-y', `${isMobile ? (mob.topbarPadY ?? 10) : (top.paddingY ?? 18)}px`);
+    root.style.setProperty('--topbar-pad-x', `${isMobile ? (mob.topbarPadX ?? 12) : (top.paddingX ?? 26)}px`);
+    root.style.setProperty('--topbar-logo', `${isMobile ? (mob.logoFontPx ?? 15) : (top.logoFontPx ?? 19)}px`);
+    root.style.setProperty('--topbar-logo-sub', `${isMobile ? (mob.logoSubPx ?? 8) : (top.logoSubPx ?? 10)}px`);
+    root.style.setProperty('--topbar-quill', `${isMobile ? (mob.quillPx ?? 20) : (top.quillPx ?? 26)}px`);
     root.style.setProperty('--topbar-btn-font', `${top.btnFontPx ?? 13}px`);
     root.style.setProperty('--topbar-btn-pad-y', `${top.btnPadY ?? 9}px`);
     root.style.setProperty('--topbar-btn-pad-x', `${top.btnPadX ?? 14}px`);
 
     const t = cfg.title || {};
-    const scale = t.scale == null ? 1 : Number(t.scale);
+    let scale = t.scale == null ? 1 : Number(t.scale);
+    if (isMobile) scale *= mob.titleScale == null ? 0.9 : Number(mob.titleScale);
     const tw = (t.w || 800) * scale;
     // Visible wood height; prefer explicit h from layout.
     const th = t.h || 230;
@@ -891,9 +935,12 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     const titleHOverW = th / tArtW;
     const padTopW = (t.paddingTopPct ?? 14) * titleHOverW;
     const padBottomW = (t.paddingBottomPct ?? 16) * titleHOverW;
+    const titleWidthPct = isMobile
+      ? (mob.titleWidthPct == null ? 88 : Number(mob.titleWidthPct))
+      : (tw / artW) * 100;
     root.style.setProperty('--title-top', `${((t.y || 0) / artH) * 100}%`);
     root.style.setProperty('--title-left', `${(cx / artW) * 100}%`);
-    root.style.setProperty('--title-width', `${(tw / artW) * 100}%`);
+    root.style.setProperty('--title-width', `${titleWidthPct}%`);
     root.style.setProperty('--title-ratio', `${tArtW} / ${th}`);
     root.style.setProperty('--title-pad-top', `${padTopW}%`);
     root.style.setProperty('--title-pad-x', `${t.paddingXPct ?? 11}%`);
@@ -908,22 +955,23 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     }
     const eyebrow = t.eyebrow || {};
     const headline = t.headline || {};
+    const eyebrowOffset = isMobile
+      ? (mob.eyebrowOffsetX == null ? -10 : Number(mob.eyebrowOffsetX))
+      : (eyebrow.offsetX ?? -40);
     root.style.setProperty('--title-eyebrow-min', `${eyebrow.minPx ?? 8}px`);
     root.style.setProperty('--title-eyebrow-vw', `${eyebrow.vw ?? 0.72}vw`);
-    root.style.setProperty('--title-eyebrow-max', `${eyebrow.maxPx ?? 11}px`);
-    root.style.setProperty('--title-eyebrow-tracking', `${eyebrow.letterSpacingPx ?? 1.5}px`);
-    root.style.setProperty('--title-eyebrow-offset-x', `${eyebrow.offsetX ?? -40}px`);
+    root.style.setProperty('--title-eyebrow-max', `${isMobile ? (mob.eyebrowMaxPx ?? 8) : (eyebrow.maxPx ?? 11)}px`);
+    root.style.setProperty('--title-eyebrow-tracking', `${isMobile ? 0.6 : (eyebrow.letterSpacingPx ?? 1.5)}px`);
+    root.style.setProperty('--title-eyebrow-offset-x', `${eyebrowOffset}px`);
     root.style.setProperty('--title-headline-min', `${headline.minPx ?? 13}px`);
     root.style.setProperty('--title-headline-vw', `${headline.vw ?? 1.35}vw`);
-    root.style.setProperty('--title-headline-max', `${headline.maxPx ?? 22}px`);
+    root.style.setProperty('--title-headline-max', `${isMobile ? (mob.headlineMaxPx ?? 16) : (headline.maxPx ?? 22)}px`);
 
     let nScale = (cfg.numberBoard && cfg.numberBoard.scale != null) ? Number(cfg.numberBoard.scale) : 1;
     let tScale = (cfg.textBoard && cfg.textBoard.scale != null) ? Number(cfg.textBoard.scale) : 1;
-    const mob = cfg.mobile || {};
-    const isMobile = window.matchMedia(`(max-width: ${mob.maxWidthPx || 760}px)`).matches;
     if (isMobile) {
-      nScale *= mob.numberBoardScale == null ? 0.75 : Number(mob.numberBoardScale);
-      tScale *= mob.textBoardScale == null ? 0.7 : Number(mob.textBoardScale);
+      nScale *= mob.numberBoardScale == null ? 0.52 : Number(mob.numberBoardScale);
+      tScale *= mob.textBoardScale == null ? 0.48 : Number(mob.textBoardScale);
     }
 
     const nb = cfg.numberBoard || {};
@@ -958,10 +1006,10 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     });
 
     const foot = cfg.footer || {};
-    root.style.setProperty('--footer-bottom', `${isMobile ? (mob.footerBottomPx ?? 8) : (foot.bottomPx ?? 14)}px`);
-    root.style.setProperty('--footer-font', `${isMobile ? (mob.footerFontPx ?? 11) : (foot.fontPx ?? 12.5)}px`);
+    root.style.setProperty('--footer-bottom', `${isMobile ? (mob.footerBottomPx ?? 10) : (foot.bottomPx ?? 14)}px`);
+    root.style.setProperty('--footer-font', `${isMobile ? (mob.footerFontPx ?? 10) : (foot.fontPx ?? 12.5)}px`);
     root.style.setProperty('--footer-max-px', `${foot.maxWidthPx ?? 420}px`);
-    root.style.setProperty('--footer-max-vw', `${foot.maxWidthVw ?? 86}vw`);
+    root.style.setProperty('--footer-max-vw', `${isMobile ? (mob.footerMaxVw ?? 94) : (foot.maxWidthVw ?? 86)}vw`);
   }catch(err){
     console.warn('ui layout config failed', err);
   }
@@ -969,6 +1017,6 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="island-scene.js?v=20260715ae"></script>
+<script src="island-scene.js?v=20260715af"></script>
 </body>
 </html>

@@ -121,9 +121,21 @@
 
   "mobile": {
     "maxWidthPx": 760,
-    "numberBoardScale": 0.75,
-    "textBoardScale": 0.7,
-    "footerBottomPx": 8,
-    "footerFontPx": 11
+    "numberBoardScale": 0.52,
+    "textBoardScale": 0.48,
+    "titleWidthPct": 88,
+    "titleScale": 0.9,
+    "eyebrowOffsetX": -10,
+    "eyebrowMaxPx": 8,
+    "headlineMaxPx": 16,
+    "topbarPadY": 10,
+    "topbarPadX": 12,
+    "logoFontPx": 15,
+    "logoSubPx": 8,
+    "quillPx": 20,
+    "footerBottomPx": 10,
+    "footerFontPx": 10,
+    "footerMaxVw": 94,
+    "flipRightTags": true
   }
 }
