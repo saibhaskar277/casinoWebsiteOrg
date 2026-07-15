@@ -121,9 +121,6 @@
 
   "mobile": {
     "maxWidthPx": 760,
-    "fitMode": "contain",
-    "viewZoom": 0.9,
-    "landmarkGrow": 0.88,
     "numberBoardScale": 0.78,
     "textBoardScale": 0.82,
     "textFontScale": 1.15,

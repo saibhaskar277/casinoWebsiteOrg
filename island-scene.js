@@ -15,11 +15,6 @@
   /** Visible water band (art pixels). Overridden from layout.layers.water when present. */
   let WATER_HIT = { y: 380, h: 530 };
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  /** On phones: letterbox/pillarbox so every image stays in frame at true aspect. */
-  let FIT_MODE = 'stretch'; // 'stretch' | 'contain'
-  let MOBILE_MAX_PX = 760;
-  let SCENE_CFG = { viewZoom: 1, landmarkGrow: 1.2 };
-  let MOB_CFG = {};
 
   /** Filled from assets/scene/layout.json + assets/ui/layout.json */
   let LAYOUT = null;
@@ -33,8 +28,8 @@
 
   async function loadConfigs() {
     const [sceneRes, uiRes] = await Promise.all([
-      fetch('assets/scene/layout.json?v=20260715ag'),
-      fetch('assets/ui/layout.json?v=20260715ag'),
+      fetch('assets/scene/layout.json?v=20260715ai'),
+      fetch('assets/ui/layout.json?v=20260715ai'),
     ]);
     if (!sceneRes.ok) throw new Error('Failed to load assets/scene/layout.json');
     const scene = await sceneRes.json();
@@ -85,47 +80,7 @@
           };
         });
       }
-      const mob = ui.mobile || {};
-      MOBILE_MAX_PX = mob.maxWidthPx == null ? 760 : Number(mob.maxWidthPx);
-      MOB_CFG = mob;
-      SCENE_CFG = {
-        viewZoom: scene.viewZoom == null ? 1 : Number(scene.viewZoom),
-        landmarkGrow: scene.landmarkGrow == null ? 1.2 : Number(scene.landmarkGrow),
-      };
-      applyViewportMode();
-    } else {
-      SCENE_CFG = {
-        viewZoom: scene.viewZoom == null ? 1 : Number(scene.viewZoom),
-        landmarkGrow: scene.landmarkGrow == null ? 1.2 : Number(scene.landmarkGrow),
-      };
-      applyViewportMode();
     }
-  }
-
-  function isMobileViewport() {
-    return window.matchMedia(`(max-width: ${MOBILE_MAX_PX}px)`).matches;
-  }
-
-  function applyViewportMode() {
-    const mobile = isMobileViewport();
-    if (mobile) {
-      FIT_MODE = MOB_CFG.fitMode || 'contain';
-      VIEW_ZOOM = MOB_CFG.viewZoom == null ? 0.92 : Number(MOB_CFG.viewZoom);
-      LANDMARK_GROW = MOB_CFG.landmarkGrow == null ? 0.95 : Number(MOB_CFG.landmarkGrow);
-    } else {
-      FIT_MODE = 'stretch';
-      VIEW_ZOOM = SCENE_CFG.viewZoom;
-      LANDMARK_GROW = SCENE_CFG.landmarkGrow;
-    }
-  }
-
-  function refreshViewportFit() {
-    applyViewportMode();
-    landmarkMeshes.forEach((mesh) => {
-      const propScale = mesh.userData.propScale == null ? 1 : Number(mesh.userData.propScale);
-      mesh.userData.landmarkGrow = LANDMARK_GROW * propScale;
-    });
-    if (shipShadow) shipShadow.userData.landmarkGrow = LANDMARK_GROW;
   }
 
   let renderer, scene, camera, clock;
@@ -161,8 +116,8 @@
     if (!stage) return;
     const vw = Math.max(1, stage.clientWidth);
     const vh = Math.max(1, stage.clientHeight);
-    // Contain mode is uniform — no aspect repair needed. Stretch mode undoes anisotropic scale.
-    const sx = FIT_MODE === 'contain' ? 1 : (ART_W / ART_H) * (vh / vw);
+    // Undo non-uniform stretch for these props only: keep sprite pixel aspect = PNG aspect.
+    const sx = (ART_W / ART_H) * (vh / vw);
     for (let i = 0; i < landmarkMeshes.length; i++) {
       const mesh = landmarkMeshes[i];
       const grow = mesh.userData.landmarkGrow || 1;
@@ -837,44 +792,14 @@
 
   function computeCover() {
     const stage = document.getElementById('stage');
-    const rect = stage
-      ? stage.getBoundingClientRect()
-      : { width: window.innerWidth, height: window.innerHeight, left: 0, top: 0 };
+    const rect = stage ? stage.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight, left: 0, top: 0 };
     const vw = rect.width;
     const vh = rect.height;
-    const zoom = VIEW_ZOOM == null ? 1 : Number(VIEW_ZOOM);
-
-    if (FIT_MODE === 'contain') {
-      const artAspect = ART_W / ART_H;
-      const viewAspect = vw / Math.max(1, vh);
-      let fitW;
-      let fitH;
-      let ox;
-      let oy;
-      if (viewAspect > artAspect) {
-        // Pillarbox — fit height.
-        fitH = vh;
-        fitW = vh * artAspect;
-        ox = rect.left + (vw - fitW) / 2;
-        oy = rect.top;
-      } else {
-        // Letterbox — fit width.
-        fitW = vw;
-        fitH = vw / artAspect;
-        ox = rect.left;
-        oy = rect.top + (vh - fitH) / 2;
-      }
-      view.scaleX = (fitW / ART_W) * zoom;
-      view.scaleY = (fitH / ART_H) * zoom;
-      view.ox = ox + (fitW - fitW * zoom) / 2;
-      view.oy = oy + (fitH - fitH * zoom) / 2;
-    } else {
-      // Stretch-to-fill.
-      view.scaleX = (vw / ART_W) * zoom;
-      view.scaleY = (vh / ART_H) * zoom;
-      view.ox = rect.left + (vw - vw * zoom) / 2;
-      view.oy = rect.top + (vh - vh * zoom) / 2;
-    }
+    // Stretch-to-fill: the whole illustration maps to the whole stage (no crop, no gaps).
+    view.scaleX = (vw / ART_W) * VIEW_ZOOM;
+    view.scaleY = (vh / ART_H) * VIEW_ZOOM;
+    view.ox = rect.left;
+    view.oy = rect.top;
     return view;
   }
 
@@ -1054,9 +979,7 @@
       artRoot.add(mesh);
       propMeshes[p.id] = mesh;
       if (LANDMARK_IDS.has(p.id)) {
-        const propScale = p.scale == null ? 1 : Number(p.scale);
-        mesh.userData.propScale = propScale;
-        mesh.userData.landmarkGrow = LANDMARK_GROW * propScale;
+        mesh.userData.landmarkGrow = LANDMARK_GROW * (p.scale == null ? 1 : Number(p.scale));
         landmarkMeshes.push(mesh);
       }
       if (p.id === 'ship') shipMesh = mesh;
@@ -1305,34 +1228,11 @@
     renderer.setPixelRatio(dpr);
     renderer.setSize(w, h, false);
 
-    refreshViewportFit();
-
-    const zoom = VIEW_ZOOM == null ? 1 : Number(VIEW_ZOOM);
-    if (FIT_MODE === 'contain') {
-      const artAspect = ART_W / ART_H;
-      const viewAspect = w / h;
-      if (viewAspect > artAspect) {
-        // Pillarbox — fit height.
-        const halfW = viewAspect / artAspect / zoom;
-        camera.left = -halfW;
-        camera.right = halfW;
-        camera.top = 1 / zoom;
-        camera.bottom = -1 / zoom;
-      } else {
-        // Letterbox — fit width.
-        const halfH = artAspect / viewAspect / zoom;
-        camera.left = -1 / zoom;
-        camera.right = 1 / zoom;
-        camera.top = halfH;
-        camera.bottom = -halfH;
-      }
-    } else {
-      // Stretch-to-fill (optional uniform zoom around center).
-      camera.left = -1 / zoom;
-      camera.right = 1 / zoom;
-      camera.top = 1 / zoom;
-      camera.bottom = -1 / zoom;
-    }
+    // Stretch-to-fill: art plane (x,y in [-1,1]) maps to the whole stage.
+    camera.left = -1;
+    camera.right = 1;
+    camera.top = 1;
+    camera.bottom = -1;
     camera.updateProjectionMatrix();
     syncLandmarkAspect();
   }

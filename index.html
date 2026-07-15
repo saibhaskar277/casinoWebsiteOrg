@@ -918,7 +918,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 /** Apply ALL UI chrome from assets/ui/layout.json — CSS no longer hardcodes sizes. */
 (async function applyUiLayout(){
   try{
-    const res = await fetch('assets/ui/layout.json?v=20260715ah');
+    const res = await fetch('assets/ui/layout.json?v=20260715ai');
     if(!res.ok) return;
     const cfg = await res.json();
     const artW = cfg.uiArtWidth || 1920;
@@ -1037,6 +1037,6 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="island-scene.js?v=20260715ah"></script>
+<script src="island-scene.js?v=20260715ai"></script>
 </body>
 </html>
