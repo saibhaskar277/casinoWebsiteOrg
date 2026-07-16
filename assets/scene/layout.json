@@ -10,7 +10,7 @@
     "water": { "file": "water.png", "x": 0, "y": 380, "w": 1920, "h": 530, "scale": 1 },
     "shadow": { "file": "shadow.png", "x": 0, "y": 0, "w": 1920, "h": 1080, "scale": 1 }
   },
-  "props": {
+  "props": { 
     "shipFar": { "file": "ship-far.png", "x": 745, "y": 357, "w": 97, "h": 90, "scale": 0.886 },
     "mountain": { "file": "mountain.png", "x": 1282, "y": 172, "w": 592, "h": 397, "scale": 0.9 },
     "waterfall": { "file": "waterfall.png", "x": 1485, "y": 340, "w": 83, "h": 160, "scale": 0.9 },
