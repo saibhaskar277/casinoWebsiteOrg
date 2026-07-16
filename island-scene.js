@@ -28,8 +28,8 @@
 
   async function loadConfigs() {
     const [sceneRes, uiRes] = await Promise.all([
-      fetch('assets/scene/layout.json?v=20260716d'),
-      fetch('assets/ui/layout.json?v=20260716d'),
+      fetch('assets/scene/layout.json?v=20260716g'),
+      fetch('assets/ui/layout.json?v=20260716g'),
     ]);
     if (!sceneRes.ok) throw new Error('Failed to load assets/scene/layout.json');
     const scene = await sceneRes.json();
@@ -1007,7 +1007,7 @@
 
     // Soft waterline shadow grounds the ship without darkening its artwork.
     if (shipMesh) {
-      const shadowLoc = pxToLocal(178, 500, 220, 48);
+      const shadowLoc = pxToLocal(178, 528, 220, 48);
       const shadowMat = new THREE.MeshBasicMaterial({
         map: makeShadowTex(),
         transparent: true,
