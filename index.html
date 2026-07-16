@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="site-rev" content="__DEPLOY_REV__">
 <title>Quills Studios — The Journey to Treasure Island</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -918,7 +919,9 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 /** Apply ALL UI chrome from assets/ui/layout.json — CSS no longer hardcodes sizes. */
 (async function applyUiLayout(){
   try{
-    const res = await fetch('assets/ui/layout.json?v=20260715ai');
+    const rawRev = document.querySelector('meta[name="site-rev"]')?.content || '';
+    const layoutRev = rawRev.includes('DEPLOY_REV') ? String(Date.now()) : rawRev || String(Date.now());
+    const res = await fetch(`assets/ui/layout.json?v=${layoutRev}`, { cache: 'no-store' });
     if(!res.ok) return;
     const cfg = await res.json();
     const artW = cfg.uiArtWidth || 1920;
@@ -1037,6 +1040,6 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="island-scene.js?v=20260716f"></script>
+<script src="island-scene.js?v=__DEPLOY_REV__"></script>
 </body>
 </html>

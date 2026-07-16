@@ -26,10 +26,16 @@
     5: { x: 1520, y: 753, anchorY: 0.42 },
   };
 
+  /** Replaced with git short SHA on GitHub Pages deploy; local dev falls back to live reload. */
+  const DEPLOY_REV = '__DEPLOY_REV__';
+  const layoutRev = DEPLOY_REV.includes('DEPLOY_REV') ? String(Date.now()) : DEPLOY_REV;
+  const layoutFetch = (path) =>
+    fetch(`${path}?v=${layoutRev}`, { cache: 'no-store' });
+
   async function loadConfigs() {
     const [sceneRes, uiRes] = await Promise.all([
-      fetch('assets/scene/layout.json?v=20260716g'),
-      fetch('assets/ui/layout.json?v=20260716g'),
+      layoutFetch('assets/scene/layout.json'),
+      layoutFetch('assets/ui/layout.json'),
     ]);
     if (!sceneRes.ok) throw new Error('Failed to load assets/scene/layout.json');
     const scene = await sceneRes.json();
