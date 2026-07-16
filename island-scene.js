@@ -28,8 +28,8 @@
 
   async function loadConfigs() {
     const [sceneRes, uiRes] = await Promise.all([
-      fetch('assets/scene/layout.json?v=20260715ai'),
-      fetch('assets/ui/layout.json?v=20260715ai'),
+      fetch('assets/scene/layout.json?v=20260716d'),
+      fetch('assets/ui/layout.json?v=20260716d'),
     ]);
     if (!sceneRes.ok) throw new Error('Failed to load assets/scene/layout.json');
     const scene = await sceneRes.json();
@@ -49,7 +49,7 @@
     }
     // Draw order for props (back → front)
     const propOrder = [
-      'shipFar', 'mountain', 'waterfall', 'waterfallSpray', 'mountainWaves',
+      'shipFar', 'mountain', 'waterfall', 'waterfallSpray',
       'wake', 'village', 'ship', 'fort', 'fortWaves', 'treasure',
       'palmL', 'palmR2', 'palmR1',
     ];
@@ -103,7 +103,6 @@
     'mountain',
     'waterfall',
     'waterfallSpray',
-    'mountainWaves',
     'village',
     'treasure',
     'fort',
@@ -987,9 +986,9 @@
       if (p.id.startsWith('palm')) palmMeshes.push(mesh);
     });
 
-    // Shore waves sit in front of their landmasses at the waterline.
+    // Ship wake sits just in front of the hull at the waterline.
     if (propMeshes.wake && shipMesh) {
-      propMeshes.wake.position.z = shipMesh.position.z + 0.5;
+      propMeshes.wake.position.z = shipMesh.position.z + 0.35;
       propMeshes.wake.userData.basePos = propMeshes.wake.position.clone();
     }
     // Cascade / spray sit just in front of the cliff; shore waves in front of both.
@@ -1001,10 +1000,6 @@
       propMeshes.waterfallSpray.position.z = mountainMesh.position.z + 0.25;
       propMeshes.waterfallSpray.userData.basePos = propMeshes.waterfallSpray.position.clone();
     }
-    if (propMeshes.mountainWaves && mountainMesh) {
-      propMeshes.mountainWaves.position.z = mountainMesh.position.z + 0.4;
-      propMeshes.mountainWaves.userData.basePos = propMeshes.mountainWaves.position.clone();
-    }
     if (propMeshes.fortWaves && propMeshes.fort) {
       propMeshes.fortWaves.position.z = propMeshes.fort.position.z + 0.4;
       propMeshes.fortWaves.userData.basePos = propMeshes.fortWaves.position.clone();
@@ -1012,7 +1007,7 @@
 
     // Soft waterline shadow grounds the ship without darkening its artwork.
     if (shipMesh) {
-      const shadowLoc = pxToLocal(64, 496, 306, 56);
+      const shadowLoc = pxToLocal(178, 500, 220, 48);
       const shadowMat = new THREE.MeshBasicMaterial({
         map: makeShadowTex(),
         transparent: true,
@@ -1072,9 +1067,7 @@
     if (propMeshes.waterfall && propMeshes.waterfallSpray) {
       const wf = propMeshes.waterfall;
       const spray = propMeshes.waterfallSpray;
-      const frontZ = (propMeshes.mountainWaves
-        ? propMeshes.mountainWaves.position.z
-        : spray.position.z) + 0.5;
+      const frontZ = spray.position.z + 0.5;
       // Bottom edge of the cascade sheet.
       const start = new THREE.Vector3(
         wf.position.x,
@@ -1135,7 +1128,7 @@
         depthWrite: false,
         side: THREE.DoubleSide,
       });
-      const bird = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.042), mat);
+      const bird = new THREE.Mesh(new THREE.PlaneGeometry(0.036, 0.021), mat);
       bird.userData.path = path;
       // Sprites face right; flip when velocity is leftward.
       bird.userData.facesRight = true;

@@ -11,12 +11,11 @@
     "shadow": { "file": "shadow.png", "x": 0, "y": 0, "w": 1920, "h": 1080, "scale": 1 }
   },
   "props": {
-    "shipFar": { "file": "ship-far.png", "x": 765, "y": 387, "w": 97, "h": 90, "scale": 1 },
+    "shipFar": { "file": "ship-far.png", "x": 745, "y": 357, "w": 97, "h": 90, "scale": 0.886 },
     "mountain": { "file": "mountain.png", "x": 1282, "y": 172, "w": 592, "h": 397, "scale": 0.9 },
     "waterfall": { "file": "waterfall.png", "x": 1485, "y": 340, "w": 83, "h": 160, "scale": 0.9 },
     "waterfallSpray": { "file": "waterfall-spray.png", "x": 1397, "y": 446, "w": 113, "h": 63, "scale": 0.9 },
-    "mountainWaves": { "file": "mountain-waves.png", "x": 1296, "y": 457, "w": 581, "h": 140, "scale": 0.9 },
-    "wake": { "file": "wake.png", "x": 189, "y": 498, "w": 314, "h": 86, "scale": 1 },
+    "wake": { "file": "wake.png", "x": 168, "y": 486, "w": 300, "h": 82, "scale": 1 },
     "village": { "file": "village.png", "x": 691, "y": 418, "w": 540, "h": 299, "scale": 1 },
     "ship": { "file": "ship.png", "x": 210, "y": 182, "w": 260, "h": 378, "scale": 1 },
     "fort": { "file": "fort.png", "x": 1097, "y": 471, "w": 789, "h": 397, "scale": 1 },
