@@ -53,18 +53,22 @@
         h: layers.water.h == null ? WATER_HIT.h : Number(layers.water.h),
       };
     }
-    // Draw order for props (back → front)
+    // Draw order for props (back → front). Treasure renders after overlays — see foregroundPropOrder.
     const propOrder = [
       'shipFar', 'mountain', 'waterfall', 'waterfallSpray',
-      'wake', 'village', 'ship', 'fort', 'fortWaves', 'treasure',
+      'wake', 'village', 'ship', 'fort', 'fortWaves',
       'palmL', 'palmR2', 'palmR1',
     ];
+    const foregroundPropOrder = ['treasure'];
     LAYOUT = {
       bg: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.bg),
       clouds: Object.assign({ scale: 1, scaleX: 1.3, scaleY: 1.08 }, layers.clouds),
       water: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.water),
       shadow: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.shadow),
       props: propOrder
+        .filter((id) => propsObj[id])
+        .map((id) => Object.assign({ id, scale: 1 }, propsObj[id], { id })),
+      foregroundProps: foregroundPropOrder
         .filter((id) => propsObj[id])
         .map((id) => Object.assign({ id, scale: 1 }, propsObj[id], { id })),
       overlays: ['overlayL', 'overlayR']
@@ -904,6 +908,7 @@
       LAYOUT.water.file,
       LAYOUT.shadow.file,
       ...LAYOUT.props.map((p) => p.file),
+      ...LAYOUT.foregroundProps.map((p) => p.file),
       ...LAYOUT.overlays.map((p) => p.file),
     ];
     const texMap = {};
@@ -1068,6 +1073,21 @@
       artRoot.add(mesh);
       propMeshes[p.id] = mesh;
     });
+
+    // Foreground landmarks (e.g. treasure) sit above shadow + corner overlays.
+    LAYOUT.foregroundProps.forEach((p) => {
+      const mesh = makePlane(texMap[p.file], p, z++);
+      mesh.userData.id = p.id;
+      mesh.userData.basePos = mesh.position.clone();
+      mesh.renderOrder = 1100;
+      artRoot.add(mesh);
+      propMeshes[p.id] = mesh;
+      if (LANDMARK_IDS.has(p.id)) {
+        mesh.userData.landmarkGrow = LANDMARK_GROW * (p.scale == null ? 1 : Number(p.scale));
+        landmarkMeshes.push(mesh);
+      }
+    });
+    syncLandmarkAspect();
 
     // Arc droplets: leave the bottom of waterfall-01 and land on waterfall-02.
     if (propMeshes.waterfall && propMeshes.waterfallSpray) {
