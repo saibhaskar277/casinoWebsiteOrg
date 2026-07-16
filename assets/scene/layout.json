@@ -20,7 +20,7 @@
     "ship": { "file": "ship.png", "x": 210, "y": 218, "w": 260, "h": 378, "scale": 1 },
     "fort": { "file": "fort.png", "x": 1097, "y": 471, "w": 789, "h": 397, "scale": 1 },
     "fortWaves": { "file": "fort-waves.png", "x": 1236, "y": 705, "w": 511, "h": 154, "scale": 1 },
-    "treasure": { "file": "treasure.png", "x": 125, "y": 638, "w": 506, "h": 273, "scale": 1 },
+    "treasure": { "file": "treasure.png", "x": 140, "y": 689, "w": 506, "h": 273, "scale": 1 },
     "palmL": { "file": "palm-left.png", "x": 0, "y": 0, "w": 749, "h": 380, "scale": 1, "grow": 1.1, "margin": 0.05 },
     "palmR2": { "file": "palm-right-2.png", "x": 1386, "y": 0, "w": 534, "h": 233, "scale": 1, "grow": 1.1, "margin": 0.05 },
     "palmR1": { "file": "palm-right-1.png", "x": 1734, "y": 0, "w": 186, "h": 328, "scale": 1, "grow": 1.12, "margin": 0.06 }
