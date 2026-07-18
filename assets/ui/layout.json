@@ -1,10 +1,9 @@
 {
   "notes": "Edit THIS file for all on-page UI. Reload after save. Positions use art pixels; scale 1 = 100%. title.paddingTopPct/BottomPct are % of board height; paddingXPct is % of board width. Scene props live in assets/scene/layout.json.",
   "uiArtWidth": 1920,
-  "uiArtHeight": 1080,
+  "uiArtHeight": 960,
   "sceneArtWidth": 1920,
-  "sceneArtHeight": 1080,
-
+  "sceneArtHeight": 960,
   "topbar": {
     "paddingY": 18,
     "paddingX": 26,
@@ -15,14 +14,14 @@
     "btnPadY": 9,
     "btnPadX": 14
   },
-
   "title": {
     "file": "title-board.png",
-    "x": 520,
-    "y": 36,
-    "w": 780,
-    "h": 228,
+    "x": 505,
+    "y": 0,
+    "w": 755,
+    "h": 329,
     "scale": 1,
+    "textOffsetX": 40,
     "paddingTopPct": 18,
     "paddingXPct": 12,
     "paddingBottomPct": 18,
@@ -40,7 +39,6 @@
       "maxPx": 28
     }
   },
-
   "numberBoard": {
     "w": 253,
     "h": 250,
@@ -52,7 +50,6 @@
     "badgeMinPx": 11,
     "badgeMaxPx": 17
   },
-
   "textBoard": {
     "w": 520,
     "h": 250,
@@ -68,57 +65,54 @@
     "padLeftPct": 28,
     "padBottomPct": 18
   },
-
   "hotspots": {
     "1": {
       "label": "Casino Games Development",
-      "x": 429,
-      "y": 510,
-      "numberScale": 1,
-      "textScale": 1,
+      "x": 405,
+      "y": 485,
+      "numberScale": 0.95,
+      "textScale": 0.95,
       "anchorY": 0.42
     },
     "2": {
       "label": "Casual & Hyper Casual Games",
-      "x": 1670,
-      "y": 382,
-      "numberScale": 1,
-      "textScale": 1,
+      "x": 1400,
+      "y": 350,
+      "numberScale": 0.95,
+      "textScale": 0.95,
       "anchorY": 0.42
     },
     "3": {
       "label": "About Our Team",
-      "x": 960,
-      "y": 645,
-      "numberScale": 1,
-      "textScale": 1,
+      "x": 835,
+      "y": 520,
+      "numberScale": 0.95,
+      "textScale": 0.95,
       "anchorY": 0.42
     },
     "4": {
       "label": "Our Technology & Services",
-      "x": 390,
-      "y": 805,
-      "numberScale": 1,
-      "textScale": 1,
+      "x": 380,
+      "y": 760,
+      "numberScale": 0.95,
+      "textScale": 0.95,
       "anchorY": 0.42
     },
     "5": {
       "label": "Our Portfolio & Clients",
-      "x": 1520,
-      "y": 753,
-      "numberScale": 1,
-      "textScale": 1,
+      "x": 1500,
+      "y": 620,
+      "numberScale": 0.95,
+      "textScale": 0.95,
       "anchorY": 0.42
     }
   },
-
   "footer": {
     "bottomPx": 20,
     "fontPx": 12.5,
     "maxWidthPx": 560,
     "maxWidthVw": 90
   },
-
   "mobile": {
     "maxWidthPx": 760,
     "numberBoardScale": 0.78,

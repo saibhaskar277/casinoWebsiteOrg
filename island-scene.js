@@ -6,7 +6,7 @@
   'use strict';
 
   let ART_W = 1920;
-  let ART_H = 1080;
+  let ART_H = 960;
   /** Exact cover prevents resolution-dependent gaps around the illustration. */
   let VIEW_ZOOM = 1;
   let LANDMARK_GROW = 1.2;
@@ -19,11 +19,11 @@
   /** Filled from assets/scene/layout.json + assets/ui/layout.json */
   let LAYOUT = null;
   let HOTSPOTS = {
-    1: { x: 429, y: 510, anchorY: 0.42 },
-    2: { x: 1670, y: 382, anchorY: 0.42 },
-    3: { x: 960, y: 645, anchorY: 0.42 },
-    4: { x: 390, y: 805, anchorY: 0.42 },
-    5: { x: 1520, y: 753, anchorY: 0.42 },
+    1: { x: 355, y: 425, anchorY: 0.42 },
+    2: { x: 1530, y: 340, anchorY: 0.42 },
+    3: { x: 835, y: 520, anchorY: 0.42 },
+    4: { x: 300, y: 720, anchorY: 0.42 },
+    5: { x: 1470, y: 620, anchorY: 0.42 },
   };
 
   /** Replaced with git short SHA on GitHub Pages deploy; local dev falls back to live reload. */
@@ -40,7 +40,7 @@
     if (!sceneRes.ok) throw new Error('Failed to load assets/scene/layout.json');
     const scene = await sceneRes.json();
     ART_W = scene.artWidth || 1920;
-    ART_H = scene.artHeight || 1080;
+    ART_H = scene.artHeight || 960;
     VIEW_ZOOM = scene.viewZoom == null ? 1 : Number(scene.viewZoom);
     LANDMARK_GROW = scene.landmarkGrow == null ? 1.2 : Number(scene.landmarkGrow);
 
@@ -54,15 +54,16 @@
       };
     }
     // Draw order for props (back → front). Treasure renders after overlays — see foregroundPropOrder.
+    // cloudFront sits above the mountain/falls in the source art stack.
     const propOrder = [
-      'shipFar', 'mountain', 'waterfall', 'waterfallSpray',
-      'wake', 'village', 'ship', 'fort', 'fortWaves',
+      'shipFar', 'mountain', 'waterfall', 'waterfallSpray', 'cloudFront',
+      'wake', 'village', 'flagVillage', 'ship', 'flagShip', 'fort', 'flagFort',
       'palmL', 'palmR2', 'palmR1',
     ];
     const foregroundPropOrder = ['treasure'];
     LAYOUT = {
       bg: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.bg),
-      clouds: Object.assign({ scale: 1, scaleX: 1.3, scaleY: 1.08 }, layers.clouds),
+      backClouds: Array.isArray(layers.backClouds) ? layers.backClouds.map((c) => Object.assign({ scale: 1 }, c)) : [],
       water: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.water),
       shadow: Object.assign({ w: ART_W, h: ART_H, scale: 1 }, layers.shadow),
       props: propOrder
@@ -95,9 +96,11 @@
 
   let renderer, scene, camera, clock;
   let artRoot, view = { scaleX: 1, scaleY: 1, ox: 0, oy: 0 };
-  let waterMat, wakeMat, cloudMesh, shipMesh, shipShadow, mountainMesh;
+  let waterMat, wakeMat, shipMesh, shipShadow, mountainMesh;
+  let cloudMeshes = [];
   let waveMats = [];
   let waterfallMats = [];
+  let flagMats = [];
   let palmMeshes = [];
   let mistPoints, dropletPoints, splashPoints, seagulls = [];
   let landmarkMeshes = [];
@@ -118,6 +121,9 @@
     'fort',
     'fortWaves',
     'wake',
+    'flagShip',
+    'flagFort',
+    'flagVillage',
   ]);
 
   function syncLandmarkAspect() {
@@ -164,7 +170,9 @@
     } else {
       url = SCENE_BASE + file;
     }
-    return url.split('/').map((seg) => encodeURIComponent(decodeURIComponent(seg))).join('/');
+    url = url.split('/').map((seg) => encodeURIComponent(decodeURIComponent(seg))).join('/');
+    // Bust stale image caches — art files change without renaming.
+    return `${url}?v=${layoutRev}`;
   }
 
   function loadTex(file) {
@@ -350,6 +358,72 @@
       );
     };
     mat.customProgramCacheKey = () => 'island-wake-uv-only-v1';
+    return mat;
+  }
+
+  /**
+   * Cloth wind — UV warp like water flow, but pinned at the hoist (left)
+   * and rippling horizontally toward the free end.
+   */
+  function makeFlagMaterial(tex, opts) {
+    const options = opts || {};
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+      side: THREE.DoubleSide,
+    });
+    mat.userData.uTime = { value: 0 };
+    mat.userData.uReduced = { value: reducedMotion ? 1 : 0 };
+    mat.userData.uSpeed = { value: options.speed == null ? 1.15 : options.speed };
+    mat.userData.uAmp = { value: options.amp == null ? 1 : options.amp };
+
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = mat.userData.uTime;
+      shader.uniforms.uReduced = mat.userData.uReduced;
+      shader.uniforms.uSpeed = mat.userData.uSpeed;
+      shader.uniforms.uAmp = mat.userData.uAmp;
+      mat.userData.shader = shader;
+
+      shader.fragmentShader =
+        `
+        uniform float uTime;
+        uniform float uReduced;
+        uniform float uSpeed;
+        uniform float uAmp;
+        ` + shader.fragmentShader;
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `
+        #ifdef USE_MAP
+          vec2 uv = vMapUv;
+          float t = uTime * (1.0 - uReduced) * uSpeed;
+          // Pin hoist (left edge); free end flutters more.
+          float pin = smoothstep(0.02, 0.22, uv.x);
+          float tip = pin * pin;
+
+          float w1 = sin(uv.x * 9.5 - t * 2.35 + uv.y * 2.8);
+          float w2 = sin(uv.x * 17.0 - t * 3.55 + uv.y * 5.5 + 1.3);
+          float w3 = sin(uv.x * 28.0 - t * 4.8 + uv.y * 9.0);
+          float flutter = sin(uv.y * 16.0 + t * 2.2) * uv.x;
+
+          vec2 warp = vec2(
+            (w1 * 0.004 + w2 * 0.0025) * tip,
+            (w1 * 0.018 + w2 * 0.010 + w3 * 0.005 + flutter * 0.006) * tip
+          ) * uAmp;
+
+          vec4 sampledDiffuseColor = texture2D(map, clamp(uv + warp, 0.0, 1.0));
+          // Soft fold shade so the cloth reads as waving, not scrolling water.
+          float fold = 0.92 + 0.08 * sin(uv.x * 11.0 - t * 2.1 + uv.y * 3.0);
+          sampledDiffuseColor.rgb *= mix(1.0, fold, tip);
+          diffuseColor *= sampledDiffuseColor;
+        #endif
+        `
+      );
+    };
+    mat.customProgramCacheKey = () => 'island-flag-cloth-uv-v1';
     return mat;
   }
 
@@ -624,7 +698,6 @@
   const BIRD_FILES = [
     'assets/birds/bird-1.png',
     'assets/birds/bird-2.png',
-    'assets/birds/bird-3.png',
   ];
 
   async function loadBirdTextures() {
@@ -904,7 +977,7 @@
     // Load textures
     const files = [
       LAYOUT.bg.file,
-      LAYOUT.clouds.file,
+      ...LAYOUT.backClouds.map((c) => c.file),
       LAYOUT.water.file,
       LAYOUT.shadow.file,
       ...LAYOUT.props.map((p) => p.file),
@@ -927,13 +1000,20 @@
     let z = -5;
     artRoot.add(makePlane(texMap[LAYOUT.bg.file], LAYOUT.bg, z++));
 
-    cloudMesh = makePlane(texMap[LAYOUT.clouds.file], LAYOUT.clouds, z++);
-    // Overscan so slow parallax drift never reveals the plane edges against the sky.
-    cloudMesh.scale.x = LAYOUT.clouds.scaleX == null ? 1.3 : Number(LAYOUT.clouds.scaleX);
-    cloudMesh.scale.y = LAYOUT.clouds.scaleY == null ? 1.08 : Number(LAYOUT.clouds.scaleY);
-    cloudMesh.userData.baseX = cloudMesh.position.x;
-    cloudMesh.userData.basePosY = cloudMesh.position.y;
-    artRoot.add(cloudMesh);
+    // Three separate background cloud layers (drawn back → front as listed).
+    cloudMeshes = [];
+    LAYOUT.backClouds.forEach((c) => {
+      const mesh = makePlane(texMap[c.file], c, z++);
+      // Overscan so slow parallax drift never reveals the plane edges against the sky.
+      mesh.scale.x = c.scaleX == null ? 1 : Number(c.scaleX);
+      mesh.scale.y = c.scaleY == null ? 1 : Number(c.scaleY);
+      mesh.userData.baseX = mesh.position.x;
+      mesh.userData.drift = c.drift == null ? 0.045 : Number(c.drift);
+      mesh.userData.amp = c.amp == null ? 0.07 : Number(c.amp);
+      mesh.userData.phase = cloudMeshes.length * 1.7;
+      artRoot.add(mesh);
+      cloudMeshes.push(mesh);
+    });
 
     waterMat = makeWaterMaterial(texMap[LAYOUT.water.file]);
     artRoot.add(makePlane(texMap[LAYOUT.water.file], LAYOUT.water, z++, waterMat));
@@ -977,6 +1057,12 @@
         // Beach-like pool wash where the fall lands (quieter than ocean shore).
         mat = makeWaterfallPoolMaterial(texMap[p.file]);
         waterfallMats.push(mat);
+      } else if (p.id === 'flagShip' || p.id === 'flagFort' || p.id === 'flagVillage') {
+        mat = makeFlagMaterial(texMap[p.file], {
+          speed: p.id === 'flagShip' ? 1.35 : p.id === 'flagFort' ? 1.1 : 1.0,
+          amp: p.id === 'flagShip' ? 1.15 : 1.0,
+        });
+        flagMats.push(mat);
       }
       const mesh = makePlane(texMap[p.file], p, z++);
       if (mat) mesh.material = mat;
@@ -1015,10 +1101,21 @@
       propMeshes.fortWaves.position.z = propMeshes.fort.position.z + 0.4;
       propMeshes.fortWaves.userData.basePos = propMeshes.fortWaves.position.clone();
     }
+    // Flags sit just in front of their parent landmarks.
+    [
+      ['flagShip', 'ship'],
+      ['flagVillage', 'village'],
+      ['flagFort', 'fort'],
+    ].forEach(([flagId, parentId]) => {
+      if (propMeshes[flagId] && propMeshes[parentId]) {
+        propMeshes[flagId].position.z = propMeshes[parentId].position.z + 0.2;
+        propMeshes[flagId].userData.basePos = propMeshes[flagId].position.clone();
+      }
+    });
 
     // Soft waterline shadow grounds the ship without darkening its artwork.
     if (shipMesh) {
-      const shadowLoc = pxToLocal(178, 528, 220, 48);
+      const shadowLoc = pxToLocal(160, 500, 280, 50);
       const shadowMat = new THREE.MeshBasicMaterial({
         map: makeShadowTex(),
         transparent: true,
@@ -1141,20 +1238,29 @@
 
     // Birds — assets/birds sprites; fall back to drawn seagull.
     const birdTexes = await loadBirdTextures();
+    // Birds render behind all props (z=-3.9), so paths stay in open sky:
+    // left of the title board and along the horizon band below it.
     const birdPaths = [
-      { cx: -0.45, cy: 0.42, rx: 0.16, ry: 0.07, speed: 0.32, phase: 0 },
-      { cx: 0.35, cy: 0.48, rx: 0.2, ry: 0.08, speed: 0.26, phase: 1.2 },
-      { cx: 0.1, cy: 0.55, rx: 0.22, ry: 0.05, speed: 0.2, phase: 2.4 },
-      { cx: -0.2, cy: 0.5, rx: 0.18, ry: 0.06, speed: 0.28, phase: 0.7 },
+      { cx: -0.66, cy: 0.71, rx: 0.14, ry: 0.05, speed: 0.15, phase: 0 },
+      { cx: -0.55, cy: 0.54, rx: 0.12, ry: 0.04, speed: 0.18, phase: 1.5 },
+      { cx: -0.08, cy: 0.3, rx: 0.22, ry: 0.025, speed: 0.12, phase: 2.6 },
     ];
     birdPaths.forEach((path, i) => {
+      const tex = birdTexes[i % birdTexes.length];
       const mat = new THREE.MeshBasicMaterial({
-        map: birdTexes[i % birdTexes.length],
+        map: tex,
         transparent: true,
         depthWrite: false,
         side: THREE.DoubleSide,
       });
-      const bird = new THREE.Mesh(new THREE.PlaneGeometry(0.036, 0.021), mat);
+      // Size from the sprite's own pixel dimensions (flock images are wide).
+      const img = tex.image;
+      const px = img && img.width ? { w: img.width, h: img.height } : { w: 90, h: 40 };
+      const spriteScale = 0.54;
+      const bird = new THREE.Mesh(
+        new THREE.PlaneGeometry((px.w * spriteScale) / 960, (px.h * spriteScale) / 480),
+        mat
+      );
       bird.userData.path = path;
       // Sprites face right; flip when velocity is leftward.
       bird.userData.facesRight = true;
@@ -1268,13 +1374,15 @@
     }
 
     if (!reducedMotion) {
-      if (cloudMesh) {
-        // Slow, continuous parallax drift within the overscan margin (no visible edge).
-        cloudMesh.position.x = cloudMesh.userData.baseX + Math.sin(t * 0.045) * 0.09;
-        cloudMesh.position.y =
-          cloudMesh.userData.basePosY !== undefined
-            ? cloudMesh.userData.basePosY
-            : cloudMesh.position.y;
+      // Slow, continuous parallax drift within the overscan margin (no visible edge).
+      for (let i = 0; i < cloudMeshes.length; i++) {
+        const cm = cloudMeshes[i];
+        cm.position.x = cm.userData.baseX + Math.sin(t * cm.userData.drift + cm.userData.phase) * cm.userData.amp;
+      }
+      if (propMeshes.cloudFront) {
+        // Front cloud drifts a touch faster than the backdrop for parallax depth.
+        const cb = propMeshes.cloudFront.userData.basePos;
+        propMeshes.cloudFront.position.x = cb.x + Math.sin(t * 0.06 + 1.7) * 0.05;
       }
       if (shipMesh) {
         const b = shipMesh.userData.basePos;
@@ -1304,12 +1412,26 @@
           propMeshes.wake.position.y = wb.y + heave * 0.0015;
           if (wakeMat) wakeMat.userData.uSwell.value = heave;
         }
+        if (propMeshes.flagShip) {
+          // Rigidly attach the flag to the mast: rotate its offset from the
+          // ship's pivot by the same roll angle, then add the same surge/heave.
+          const fb = propMeshes.flagShip.userData.basePos;
+          const theta = roll * 0.02;
+          const dx = fb.x - b.x;
+          const dy = fb.y - b.y;
+          propMeshes.flagShip.position.x = b.x + surge * 0.006 + dx - theta * dy;
+          propMeshes.flagShip.position.y = b.y + heave * 0.008 + dy + theta * dx;
+          propMeshes.flagShip.rotation.z = theta;
+        }
       }
       for (let i = 0; i < waveMats.length; i++) {
         waveMats[i].userData.uTime.value = t;
       }
       for (let i = 0; i < waterfallMats.length; i++) {
         waterfallMats[i].userData.uTime.value = t;
+      }
+      for (let i = 0; i < flagMats.length; i++) {
+        flagMats[i].userData.uTime.value = t;
       }
       if (propMeshes.shipFar) {
         const b = propMeshes.shipFar.userData.basePos;

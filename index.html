@@ -248,9 +248,10 @@ body.is-ready .stage{
   max-width:100%;
   line-height:1.2;
   white-space:nowrap;
-  transform:translateX(var(--title-eyebrow-offset-x, -40px));
+  transform:translateX(calc(var(--title-eyebrow-offset-x, -40px) + var(--title-text-offset-x, 0px)));
 }
 .hero-title{
+  transform:translateX(var(--title-text-offset-x, 0px));
   font-family:'Fraunces', serif;
   font-weight:900;
   font-size:clamp(var(--title-headline-min, 13px), var(--title-headline-vw, 1.35vw), var(--title-headline-max, 22px));
@@ -981,6 +982,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     root.style.setProperty('--title-eyebrow-max', `${isMobile ? (mob.eyebrowMaxPx ?? 8) : (eyebrow.maxPx ?? 11)}px`);
     root.style.setProperty('--title-eyebrow-tracking', `${isMobile ? 0.6 : (eyebrow.letterSpacingPx ?? 1.5)}px`);
     root.style.setProperty('--title-eyebrow-offset-x', `${eyebrowOffset}px`);
+    root.style.setProperty('--title-text-offset-x', `${t.textOffsetX ?? 0}px`);
     root.style.setProperty('--title-headline-min', `${headline.minPx ?? 13}px`);
     root.style.setProperty('--title-headline-vw', `${headline.vw ?? 1.35}vw`);
     root.style.setProperty('--title-headline-max', `${isMobile ? (mob.headlineMaxPx ?? 16) : (headline.maxPx ?? 22)}px`);
