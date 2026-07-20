@@ -15,6 +15,16 @@
     },
     "backClouds": [
       {
+        "file": "cloud-3.png",
+        "x": 194,
+        "y": 120,
+        "w": 1020,
+        "h": 217,
+        "scale": 1,
+        "drift": 0.06,
+        "amp": 0.05
+      },
+      {
         "file": "cloud-4.png",
         "x": 0,
         "y": -130,
@@ -35,16 +45,6 @@
         "scale": 1,
         "drift": 0.05,
         "amp": 0.06
-      },
-      {
-        "file": "cloud-3.png",
-        "x": 64,
-        "y": -50,
-        "w": 1020,
-        "h": 217,
-        "scale": 1,
-        "drift": 0.06,
-        "amp": 0.05
       }
     ],
     "water": {
@@ -79,23 +79,23 @@
       "y": 142,
       "w": 580,
       "h": 371,
-      "scale": 0.95
+      "scale": 0.855
     },
     "waterfall": {
       "file": "waterfall.png",
-      "x": 1262,
-      "y": 273,
+      "x": 1266,
+      "y": 271,
       "w": 79,
       "h": 152,
-      "scale": 1
+      "scale": 0.9
     },
     "waterfallSpray": {
       "file": "waterfall-spray.png",
-      "x": 1187,
-      "y": 368,
+      "x": 1195,
+      "y": 360,
       "w": 135,
       "h": 75,
-      "scale": 1
+      "scale": 0.9
     },
     "cloudFront": {
       "file": "cloud-front.png",
@@ -107,11 +107,11 @@
     },
     "wake": {
       "file": "wake.png",
-      "x": 150,
-      "y": 481,
+      "x": 149,
+      "y": 466,
       "w": 367,
       "h": 110,
-      "scale": 1
+      "scale": 0.9
     },
     "village": {
       "file": "village.png",
@@ -119,31 +119,31 @@
       "y": 322,
       "w": 628,
       "h": 384,
-      "scale": 1
+      "scale": 0.9
     },
     "flagVillage": {
       "file": "flag-village.png",
-      "x": 840,
-      "y": 283,
+      "x": 835,
+      "y": 304,
       "w": 75,
       "h": 44,
-      "scale": 1
+      "scale": 0.9
     },
     "ship": {
       "file": "ship.png",
       "x": 121,
-      "y": 238,
+      "y": 228,
       "w": 412,
       "h": 321,
-      "scale": 1
+      "scale": 0.9
     },
     "flagShip": {
       "file": "flag-ship.png",
-      "x": 319,
-      "y": 210,
+      "x": 316,
+      "y": 217,
       "w": 75,
       "h": 44,
-      "scale": 1
+      "scale": 0.9
     },
     "fort": {
       "file": "fort.png",
@@ -151,23 +151,23 @@
       "y": 306,
       "w": 952,
       "h": 548,
-      "scale": 1
+      "scale": 0.9
     },
     "flagFort": {
       "file": "flag-fort.png",
-      "x": 1640,
-      "y": 258,
+      "x": 1616,
+      "y": 288,
       "w": 75,
       "h": 44,
-      "scale": 1
+      "scale": 0.9
     },
     "treasure": {
       "file": "treasure.png",
-      "x": 0,
-      "y": 477,
+      "x": -40,
+      "y": 501,
       "w": 615,
       "h": 483,
-      "scale": 1
+      "scale": 0.9
     },
     "palmL": {
       "file": "palm-left.png",

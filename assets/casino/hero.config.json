@@ -1,0 +1,87 @@
+{
+  "_doc": "Casino panel hero (hotspot 01). Percent positions are of the 16:9 stage. gridBounds are 0–1 inset on the reel frame (same as old heroCasinoLayout).",
+  "stage": {
+    "aspectRatio": "16 / 9",
+    "borderRadiusPx": 16,
+    "margin": "4px 0 8px",
+    "background": "#0a1428"
+  },
+  "assets": {
+    "bg": "assets/casino/bg.png",
+    "reel": "assets/casino/reel.png",
+    "wheel": "assets/casino/wheel.png",
+    "character": "assets/casino/character.png"
+  },
+  "frameAspect": 1.667,
+  "reelMachine": {
+    "top": "15%",
+    "left": "20%",
+    "width": "71%",
+    "zIndex": 4
+  },
+  "wheel": {
+    "top": "44%",
+    "left": "74%",
+    "width": "45%",
+    "zIndex": 5
+  },
+  "character": {
+    "bottom": "8%",
+    "left": "5%",
+    "height": "70%",
+    "zIndex": 6
+  },
+  "gridBounds": {
+    "left": 0.1317,
+    "right": 0.861,
+    "top": 0.1931,
+    "bottom": 0.9014
+  },
+  "reelRows": 3,
+  "symbols": [
+    "assets/casino/symbol-0.png",
+    "assets/casino/symbol-1.png",
+    "assets/casino/symbol-2.png",
+    "assets/casino/symbol-3.png",
+    "assets/casino/symbol-4.png",
+    "assets/casino/symbol-5.png",
+    "assets/casino/symbol-6.png",
+    "assets/casino/symbol-7.png",
+    "assets/casino/symbol-8.png"
+  ],
+  "reelColumns": [
+    [2, 1, 3],
+    [8, 3, 3],
+    [5, 7, 6],
+    [3, 4, 8],
+    [0, 0, 5]
+  ],
+  "decor": [
+    {
+      "src": "assets/casino/decor-orange-flask.png",
+      "left": "44%",
+      "top": "4%",
+      "width": "4.5%",
+      "transform": "rotate(-10deg)",
+      "opacity": 0.9,
+      "zIndex": 4
+    },
+    {
+      "src": "assets/casino/decor-fedora.png",
+      "right": "7%",
+      "top": "15%",
+      "width": "5%",
+      "opacity": 0.86,
+      "zIndex": 4
+    },
+    {
+      "src": "assets/casino/decor-flask.png",
+      "right": "15%",
+      "top": "6%",
+      "width": "4%",
+      "transform": "rotate(10deg)",
+      "opacity": 0.4,
+      "zIndex": 1
+    }
+  ]
+}

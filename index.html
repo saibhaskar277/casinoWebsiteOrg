@@ -512,14 +512,146 @@ body.panel-open .stage{
   text-align:center;
   color:var(--cream);
   box-shadow:var(--shadow);
+  overflow:hidden;
 }
 .game-card .ic{ font-size:30px; }
+.game-card .thumb{
+  width:100%;
+  aspect-ratio:1;
+  object-fit:contain;
+  display:block;
+  margin:0 auto;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));
+}
 .game-card .name{
   font-family:'Fraunces', serif;
   font-weight:700;
   font-size:13px;
   margin-top:8px;
   line-height:1.2;
+}
+
+/* Casino panel hero — layout: assets/casino/hero.config.json (applied inline by casino-hero.js) */
+.casino-hero{
+  position:relative;
+  width:100%;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.casino-hero__stage{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+.casino-hero__bg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  z-index:0;
+}
+.casino-hero__decor{
+  position:absolute;
+  height:auto;
+  pointer-events:none;
+  user-select:none;
+}
+.casino-hero__reel-machine{
+  position:absolute;
+  top:var(--hero-reel-top);
+  left:var(--hero-reel-left);
+  width:var(--hero-reel-width);
+  aspect-ratio:var(--hero-frame-aspect);
+  overflow:visible;
+  z-index:4;
+}
+.casino-hero__reel-frame{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  z-index:1;
+  pointer-events:none;
+}
+.casino-hero__symbol-grid{
+  position:absolute;
+  left:var(--hero-grid-left);
+  right:var(--hero-grid-right);
+  top:var(--hero-grid-top);
+  bottom:var(--hero-grid-bottom);
+  display:flex;
+  gap:0;
+  column-gap:0;
+  z-index:2;
+  pointer-events:none;
+}
+.casino-hero__reel-column{
+  container-type:size;
+  flex:1 1 0;
+  min-width:0;
+  height:100%;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  margin:0;
+  padding:0;
+}
+.casino-hero__reel-symbol{
+  display:block;
+  width:100%;
+  height:calc(100cqh / var(--hero-reel-rows));
+  margin:0;
+  padding:0;
+  border:0;
+  object-fit:cover;
+  object-position:center center;
+  vertical-align:top;
+}
+.casino-hero__wheel{
+  position:absolute;
+  top:var(--hero-wheel-top);
+  left:var(--hero-wheel-left);
+  width:var(--hero-wheel-width);
+  z-index:5;
+  line-height:0;
+  pointer-events:none;
+}
+.casino-hero__wheel-img{
+  display:block;
+  width:100%;
+  height:auto;
+}
+.casino-hero__character{
+  position:absolute;
+  bottom:var(--hero-char-bottom);
+  left:var(--hero-char-left);
+  height:var(--hero-char-height);
+  z-index:6;
+  line-height:0;
+  pointer-events:none;
+}
+.casino-hero__character-img{
+  display:block;
+  height:100%;
+  width:auto;
+  object-fit:contain;
+  object-position:left bottom;
+}
+
+.chip-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:4px;
+}
+.chip-row .chip{
+  flex:1 1 auto;
+  min-width:28%;
+  padding:10px 8px;
 }
 
 .stat-grid{
@@ -764,28 +896,38 @@ body.panel-open .stage{
   <div id="panel-content"></div>
 </div>
 
+<script src="casino-hero.js?v=__DEPLOY_REV__"></script>
 <script>
 const content = {
   1: {
     cat: "Chapter One",
-    title: "Casino Games Development",
-    lead: "From concept to deployment, we craft high-performance, feature-rich casino games that drive player engagement and deliver measurable business results.",
+    title: "Casino Games",
+    lead: "We build engaging, mathematically balanced casino games for industry-leading operators and platforms — slots, table games, crash, bingo, and custom builds across Web, Mobile, and EGMs.",
     body: `
-      <div class="section-label">Our Expertise</div>
-      <div class="chip-grid">
-        <div class="chip"><span class="ic">🎰</span>Slots</div>
-        <div class="chip"><span class="ic">🃏</span>Table Games</div>
-        <div class="chip"><span class="ic">🎥</span>Live Casino</div>
+      <div class="section-label">Categories</div>
+      <div class="chip-row">
         <div class="chip"><span class="ic">🚀</span>Crash Games</div>
         <div class="chip"><span class="ic">🎱</span>Bingo &amp; Instant</div>
         <div class="chip"><span class="ic">🧩</span>Custom Builds</div>
       </div>
       <div class="section-label">Game Previews</div>
       <div class="game-grid">
-        <div class="game-card"><div class="ic">🏴‍☠️</div><div class="name">Bandit's Bounty</div></div>
-        <div class="game-card"><div class="ic">🪔</div><div class="name">Secrets of the Lamp</div></div>
-        <div class="game-card"><div class="ic">🧭</div><div class="name">Pirate's Fortune</div></div>
-        <div class="game-card"><div class="ic">💥</div><div class="name">Crash Gold</div></div>
+        <div class="game-card">
+          <img class="thumb" src="assets/casino/preview-wild.png" alt="">
+          <div class="name">Bandit's Bounty</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/casino/preview-flask.png" alt="">
+          <div class="name">Secrets of the Lamp</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/casino/preview-cowgirl.png" alt="">
+          <div class="name">Pirate's Fortune</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/casino/preview-gun.png" alt="">
+          <div class="name">Crash Gold</div>
+        </div>
       </div>
       <div class="section-label">Our Maths Capability</div>
       <div class="stat-grid">
@@ -898,13 +1040,18 @@ const panel = document.getElementById('panel');
 const overlay = document.getElementById('overlay');
 const panelContent = document.getElementById('panel-content');
 
-function openPanel(id){
+async function openPanel(id){
   const c = content[id];
+  let body = c.body;
+  if (id === 1) {
+    await window.casinoHeroReady;
+    body = window.buildCasinoHeroScene() + body;
+  }
   panelContent.innerHTML = `
     <div class="panel-eyebrow"><div class="num">0${id}</div><div class="cat">${c.cat}</div></div>
     <h2>${c.title}</h2>
     <p class="lead">${c.lead}</p>
-    ${c.body}
+    ${body}
   `;
   panel.classList.add('open');
   overlay.classList.add('open');

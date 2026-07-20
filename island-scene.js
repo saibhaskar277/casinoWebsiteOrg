@@ -1134,9 +1134,7 @@
 
     syncLandmarkAspect();
 
-    artRoot.add(makePlane(texMap[LAYOUT.shadow.file], LAYOUT.shadow, z++));
-
-    // Corner foliage in front of vignette (must stay below camera.z).
+    // Corner foliage framing (must stay below camera.z).
     // Leaf sway is vertex-warped (upper/outer only); rocks stay planted.
     LAYOUT.overlays.forEach((p, i) => {
       const side = p.id === 'overlayL' ? -1 : 1;
@@ -1171,7 +1169,7 @@
       propMeshes[p.id] = mesh;
     });
 
-    // Foreground landmarks (e.g. treasure) sit above shadow + corner overlays.
+    // Foreground landmarks (e.g. treasure) sit above corner overlays.
     LAYOUT.foregroundProps.forEach((p) => {
       const mesh = makePlane(texMap[p.file], p, z++);
       mesh.userData.id = p.id;
@@ -1270,6 +1268,12 @@
       artRoot.add(bird);
       seagulls.push(bird);
     });
+
+    // Full-frame shadow.png vignette — topmost scene layer (HTML UI stays above canvas).
+    const sceneShadowMesh = makePlane(texMap[LAYOUT.shadow.file], LAYOUT.shadow, z++);
+    sceneShadowMesh.renderOrder = 2000;
+    sceneShadowMesh.userData.id = 'sceneShadow';
+    artRoot.add(sceneShadowMesh);
 
     resize();
     positionHotspots();
