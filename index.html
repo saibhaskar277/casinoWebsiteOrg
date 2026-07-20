@@ -817,9 +817,9 @@ body.panel-open .stage{
     width:min(var(--footer-max-px, 560px), var(--footer-max-vw, 92vw));
   }
 
-  /* Match --isle-size to the mobile medallion width below. */
+  /* Match --isle-size to the mobile medallion width below (+15% box scale total). */
   .hotspot{
-    --isle-size:clamp(28px, 7.15vw, 39px);
+    --isle-size:clamp(32.5px, 8.3vw, 45px);
   }
 
   /*
@@ -851,39 +851,43 @@ body.panel-open .stage{
     padding:var(--tb-pad-top, 16%) var(--tb-pad-left, 26%) var(--tb-pad-bottom, 16%) var(--tb-pad-x, 10%);
   }
 
-  /* Section boards: number + text (+10% from prior mobile sizes). */
+  /* Section boards: number + text box images. */
   .hotspot .isle{
     width:var(--isle-size) !important;
   }
   .hotspot .tag{
-    /* Wider + taller box so full labels wrap inside the wood */
-    width:clamp(97px, 26.4vw, 130px) !important;
-    aspect-ratio:520 / 280 !important;
-    font-size:clamp(5.5px, 1.27vw, 6.8px) !important;
-    line-height:1.05 !important;
+    width:clamp(83px, 22vw, 111px) !important;
+    aspect-ratio:520 / 300 !important;
+    font-size:clamp(8.8px, 2.03vw, 10.9px) !important;
+    line-height:1.12 !important;
     font-weight:800;
-    letter-spacing:-0.1px !important;
+    letter-spacing:-0.15px !important;
     white-space:normal;
     overflow:hidden !important;
     word-break:break-word;
+    overflow-wrap:anywhere;
     hyphens:auto;
-    padding:18% 9% 18% 26% !important;
+    padding:16% 8% 16% 24% !important;
     box-sizing:border-box;
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
   }
   .hotspot[data-spot="2"] .tag,
   .hotspot[data-spot="3"] .tag,
   .hotspot[data-spot="5"] .tag{
-    padding:18% 26% 18% 9% !important;
+    padding:16% 24% 16% 8% !important;
   }
-  /* 01 / 05: long labels — a touch more width */
+  /* 01 / 05: long labels — narrow for 2 lines, same larger type */
   .hotspot[data-spot="1"] .tag,
   .hotspot[data-spot="5"] .tag{
-    width:clamp(106px, 28.6vw, 141px) !important;
-    font-size:clamp(5.3px, 1.21vw, 6.6px) !important;
-    padding:20% 10% 20% 28% !important;
+    width:clamp(90px, 23.7vw, 120px) !important;
+    font-size:clamp(8.5px, 1.94vw, 10.6px) !important;
+    padding:18% 9% 18% 26% !important;
   }
   .hotspot[data-spot="5"] .tag{
-    padding:20% 28% 20% 10% !important;
+    padding:18% 26% 18% 9% !important;
   }
   .hotspot .badge{
     font-size:clamp(6.6px, 1.54vw, 8.3px) !important;
