@@ -1,7 +1,7 @@
 {
   "artWidth": 1080,
   "artHeight": 1920,
-  "notes": "Portrait mobile scene. Reuses assets/scene prop PNGs over assets/web layout Mobile view backgrounds. Edit x,y,w,h,scale per prop (art px, origin top-left). Reload page after save. scale 1 = native. landmarkGrow 1 keeps w/h in art px.",
+  "notes": "Portrait mobile scene. Positions tuned to web banner mobile version.jpg. Edit x,y,w,h,scale per prop. Reload after save.",
   "viewZoom": 1,
   "landmarkGrow": 1,
   "layers": {
@@ -16,8 +16,8 @@
     "backClouds": [
       {
         "file": "assets/web layout Mobile view/_0019_cloud-3.png",
-        "x": -304,
-        "y": 40,
+        "x": -200,
+        "y": 20,
         "w": 1688,
         "h": 621,
         "scale": 1,
@@ -27,11 +27,11 @@
       {
         "file": "assets/web layout Mobile view/_0020_cloud-4.png",
         "x": -304,
-        "y": -120,
+        "y": -100,
         "w": 1688,
         "h": 621,
         "scale": 1,
-        "scaleX": 1.1,
+        "scaleX": 1.15,
         "scaleY": 1.0,
         "drift": 0.045,
         "amp": 0.08
@@ -39,7 +39,7 @@
       {
         "file": "assets/web layout Mobile view/_0018_cloud-2.png",
         "x": -304,
-        "y": 180,
+        "y": -60,
         "w": 1688,
         "h": 621,
         "scale": 1,
@@ -50,7 +50,7 @@
     "water": {
       "file": "assets/web layout Mobile view/_0021_water.png",
       "x": 0,
-      "y": 847,
+      "y": 605,
       "w": 1080,
       "h": 1073,
       "scale": 1
@@ -67,7 +67,7 @@
   "props": {
     "shipFar": {
       "file": "ship-far.png",
-      "x": 400,
+      "x": 350,
       "y": 560,
       "w": 95,
       "h": 92,
@@ -75,75 +75,75 @@
     },
     "mountain": {
       "file": "mountain.png",
-      "x": 660,
-      "y": 360,
-      "w": 410,
-      "h": 262,
-      "scale": 1
+      "x": 556,
+      "y": 412,
+      "w": 522,
+      "h": 333,
+      "scale": 1.1
     },
     "waterfall": {
       "file": "waterfall.png",
-      "x": 905,
-      "y": 470,
-      "w": 52,
-      "h": 100,
-      "scale": 1
+      "x": 792,
+      "y": 531,
+      "w": 71,
+      "h": 137,
+      "scale": 1.1
     },
     "waterfallSpray": {
       "file": "waterfall-spray.png",
-      "x": 855,
-      "y": 560,
-      "w": 110,
-      "h": 61,
-      "scale": 1
+      "x": 725,
+      "y": 614,
+      "w": 122,
+      "h": 68,
+      "scale": 1.1
     },
     "cloudFront": {
       "file": "assets/web layout Mobile view/_0013_CLOUD-1.png",
       "x": 0,
-      "y": 0,
+      "y": 320,
       "w": 1080,
       "h": 276,
       "scale": 1
     },
     "wake": {
       "file": "wake.png",
-      "x": 40,
-      "y": 720,
-      "w": 260,
-      "h": 78,
-      "scale": 1
+      "x": 43,
+      "y": 775,
+      "w": 267,
+      "h": 80,
+      "scale": 1.1
     },
     "village": {
       "file": "village.png",
       "x": 270,
-      "y": 720,
+      "y": 780,
       "w": 360,
       "h": 220,
-      "scale": 1
+      "scale": 1.1
     },
     "flagVillage": {
       "file": "flag-village.png",
-      "x": 430,
-      "y": 695,
-      "w": 55,
-      "h": 32,
-      "scale": 1
+      "x": 452,
+      "y": 712,
+      "w": 43,
+      "h": 25,
+      "scale": 1.1
     },
     "ship": {
       "file": "ship.png",
       "x": 20,
-      "y": 530,
+      "y": 595,
       "w": 300,
       "h": 234,
-      "scale": 1
+      "scale": 1.1
     },
     "flagShip": {
       "file": "flag-ship.png",
-      "x": 195,
-      "y": 505,
-      "w": 60,
-      "h": 35,
-      "scale": 1
+      "x": 176,
+      "y": 573,
+      "w": 55,
+      "h": 32,
+      "scale": 1.1
     },
     "fort": {
       "file": "fort.png",
@@ -151,55 +151,55 @@
       "y": 850,
       "w": 720,
       "h": 414,
-      "scale": 1
+      "scale": 1.1
     },
     "flagFort": {
       "file": "flag-fort.png",
-      "x": 760,
-      "y": 830,
-      "w": 60,
-      "h": 35,
-      "scale": 1
+      "x": 835,
+      "y": 810,
+      "w": 57,
+      "h": 33,
+      "scale": 1.1
     },
     "treasure": {
       "file": "treasure.png",
-      "x": 110,
-      "y": 1470,
-      "w": 340,
-      "h": 267,
-      "scale": 1
+      "x": 130,
+      "y": 1490,
+      "w": 476,
+      "h": 374,
+      "scale": 1.32
     },
     "palmL": {
       "file": "palm-left.png",
       "x": 0,
       "y": 0,
-      "w": 500,
-      "h": 305,
+      "w": 737,
+      "h": 449,
       "scale": 1,
-      "grow": 1.1,
-      "margin": 0.05
+      "grow": 1.08,
+      "margin": 0.04
     },
     "palmR2": {
       "file": "palm-right-2.png",
-      "x": 630,
+      "x": 422,
       "y": 0,
-      "w": 450,
-      "h": 252,
+      "w": 658,
+      "h": 368,
       "scale": 1,
-      "grow": 1.1,
-      "margin": 0.05
+      "grow": 1.08,
+      "margin": 0.04
     }
   },
   "overlays": {
     "overlayR": {
       "file": "overlay-right.png",
-      "x": 680,
-      "y": 1470,
-      "w": 400,
-      "h": 284,
+      "x": 424,
+      "y": 1455,
+      "w": 656,
+      "h": 465,
       "scale": 1,
-      "grow": 1.12,
-      "margin": 0.035
+      "grow": 1.1,
+      "margin": 0.03
     }
   }
 }

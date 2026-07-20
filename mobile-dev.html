@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Preview — Treasure Island</title>
+<style>
+  :root{ color-scheme:dark; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background:radial-gradient(ellipse at 50% 0%, #12303f 0%, #0a1620 60%, #060d13 100%);
+    font-family:'Segoe UI', system-ui, sans-serif;
+    color:#cfe3ee;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100%;
+  }
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+    padding:12px 18px;
+    width:100%;
+    justify-content:center;
+    background:rgba(8,18,26,.7);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    position:sticky;
+    top:0;
+    z-index:10;
+    backdrop-filter:blur(6px);
+  }
+  .toolbar h1{
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:.5px;
+    margin:0 6px 0 0;
+    color:#eaf6ff;
+  }
+  .toolbar label{ font-size:12px; opacity:.75; }
+  select, button{
+    font:inherit;
+    font-size:13px;
+    color:#eaf6ff;
+    background:#173040;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:8px;
+    padding:7px 12px;
+    cursor:pointer;
+  }
+  select:hover, button:hover{ background:#1f4257; }
+  button.primary{ background:#e2643f; border-color:transparent; font-weight:700; }
+  button.primary:hover{ background:#f2764f; }
+  a.exit-link{
+    font:inherit;
+    font-size:13px;
+    color:#eaf6ff;
+    text-decoration:none;
+    background:#173040;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:8px;
+    padding:7px 12px;
+    cursor:pointer;
+  }
+  a.exit-link:hover{ background:#1f4257; }
+  button.active{
+    background:#2a6a86;
+    border-color:rgba(255,255,255,.35);
+    font-weight:700;
+  }
+  .mode-toggle{ display:flex; gap:6px; }
+  .dim{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12px;
+    opacity:.8;
+    min-width:96px;
+    text-align:center;
+  }
+  .stage-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px 16px 40px;
+    width:100%;
+  }
+  .scaler{ position:relative; }
+  .frame{
+    position:absolute;
+    top:0; left:0;
+    transform-origin:top left;
+  }
+  /* Phone chrome */
+  .frame.phone{
+    padding:14px;
+    border-radius:44px;
+    background:linear-gradient(160deg, #2a2f36, #14171c);
+    box-shadow:
+      0 0 0 2px #000 inset,
+      0 30px 70px rgba(0,0,0,.6),
+      0 8px 20px rgba(0,0,0,.5);
+  }
+  .frame.phone::after{
+    content:"";
+    position:absolute;
+    top:20px; left:50%;
+    transform:translateX(-50%);
+    width:120px; height:22px;
+    background:#0a0d11;
+    border-radius:0 0 14px 14px;
+    z-index:3;
+    pointer-events:none;
+  }
+  .frame.phone iframe{
+    border-radius:30px;
+    box-shadow:0 0 0 1px rgba(0,0,0,.5);
+  }
+  /* Desktop chrome */
+  .frame.desktop{
+    padding:0;
+    border-radius:12px;
+    background:#0c1620;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.1),
+      0 24px 60px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  .frame.desktop iframe{
+    border-radius:0;
+    box-shadow:none;
+  }
+  iframe{
+    display:block;
+    border:0;
+    background:#6ec8ff;
+  }
+  .hint{
+    font-size:12px;
+    opacity:.6;
+    margin-top:2px;
+    text-align:center;
+    max-width:560px;
+    line-height:1.5;
+  }
+  .hint code{
+    background:rgba(255,255,255,.08);
+    padding:1px 6px;
+    border-radius:5px;
+    font-size:11.5px;
+  }
+  .mobile-only.hidden, .pc-only.hidden{ display:none !important; }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1 id="title">📱 Mobile Preview</h1>
+    <div class="mode-toggle">
+      <button type="button" id="modeMobile" class="active">Mobile</button>
+      <button type="button" id="modePc">PC</button>
+    </div>
+    <label class="mobile-only">Device
+      <select id="device"></select>
+    </label>
+    <label class="pc-only hidden">Viewport
+      <select id="pcSize"></select>
+    </label>
+    <button id="rotate" class="mobile-only" title="Rotate">⟲ Rotate</button>
+    <span class="dim" id="dim">—</span>
+    <button id="reload" class="primary" title="Reload after editing layout">↻ Reload</button>
+    <a id="exitDev" class="exit-link" href="index.html" title="Leave preview and open the real site">↗ Normal view</a>
+    <span class="hint" id="hint">Edit <code>assets/scene/layout.mobile.json</code> then hit Reload. Widths under 760px load the portrait scene automatically.</span>
+  </div>
+
+  <div class="stage-wrap">
+    <div class="scaler" id="scaler">
+      <div class="frame phone" id="frame">
+        <iframe id="preview" src="index.html" title="Site preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Logical (CSS) viewport sizes so vw units and media queries match the real device.
+  const PHONES = [
+    { name: 'Pixel 8', w: 412, h: 915 },
+    { name: 'Pixel 8 Pro', w: 448, h: 998 },
+    { name: 'Pixel 7 / 6', w: 412, h: 915 },
+    { name: 'iPhone 15 / 14 Pro', w: 393, h: 852 },
+    { name: 'iPhone 15 Pro Max', w: 430, h: 932 },
+    { name: 'iPhone SE', w: 375, h: 667 },
+    { name: 'Galaxy S20', w: 360, h: 800 },
+    { name: 'Small phone', w: 320, h: 568 },
+  ];
+
+  const DESKTOPS = [
+    { name: 'Laptop 1366', w: 1366, h: 768 },
+    { name: 'Desktop 1440', w: 1440, h: 900 },
+    { name: 'Desktop 1600', w: 1600, h: 900 },
+    { name: 'Full HD 1920', w: 1920, h: 1080 },
+    { name: 'Art canvas 1920×960', w: 1920, h: 960 },
+  ];
+
+  const deviceSel = document.getElementById('device');
+  const pcSizeSel = document.getElementById('pcSize');
+  const iframe = document.getElementById('preview');
+  const frame = document.getElementById('frame');
+  const scaler = document.getElementById('scaler');
+  const dimEl = document.getElementById('dim');
+  const rotateBtn = document.getElementById('rotate');
+  const reloadBtn = document.getElementById('reload');
+  const modeMobileBtn = document.getElementById('modeMobile');
+  const modePcBtn = document.getElementById('modePc');
+  const titleEl = document.getElementById('title');
+  const hintEl = document.getElementById('hint');
+
+  const PHONE_BEZEL = 14;
+
+  let mode = 'mobile'; // 'mobile' | 'pc'
+  let currentPhone = PHONES[0];
+  let currentDesktop = DESKTOPS[1]; // 1440 default
+  let landscape = false;
+
+  PHONES.forEach((d, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = `${d.name} (${d.w}×${d.h})`;
+    deviceSel.appendChild(opt);
+  });
+  DESKTOPS.forEach((d, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = `${d.name} (${d.w}×${d.h})`;
+    pcSizeSel.appendChild(opt);
+  });
+  pcSizeSel.value = '1';
+
+  function setMode(next) {
+    mode = next;
+    const isMobile = mode === 'mobile';
+    modeMobileBtn.classList.toggle('active', isMobile);
+    modePcBtn.classList.toggle('active', !isMobile);
+    document.querySelectorAll('.mobile-only').forEach((el) => {
+      el.classList.toggle('hidden', !isMobile);
+    });
+    document.querySelectorAll('.pc-only').forEach((el) => {
+      el.classList.toggle('hidden', isMobile);
+    });
+    frame.classList.toggle('phone', isMobile);
+    frame.classList.toggle('desktop', !isMobile);
+    titleEl.textContent = isMobile ? '📱 Mobile Preview' : '🖥️ PC Preview';
+    hintEl.innerHTML = isMobile
+      ? 'Edit <code>assets/scene/layout.mobile.json</code> then hit Reload. Widths under 760px load the portrait scene automatically.'
+      : 'Edit <code>assets/scene/layout.json</code> then hit Reload. Wide viewports load the desktop scene.';
+    applySize();
+  }
+
+  function applySize() {
+    let w, h, bezel;
+    if (mode === 'mobile') {
+      w = landscape ? currentPhone.h : currentPhone.w;
+      h = landscape ? currentPhone.w : currentPhone.h;
+      bezel = PHONE_BEZEL;
+    } else {
+      w = currentDesktop.w;
+      h = currentDesktop.h;
+      bezel = 0;
+    }
+
+    // Keep the iframe at the TRUE viewport size so vw/media queries match reality...
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
+    // ...then visually scale the frame to fit the available space.
+    const outerW = w + bezel * 2;
+    const outerH = h + bezel * 2;
+    const availW = Math.max(280, window.innerWidth - 48);
+    const availH = Math.max(360, window.innerHeight - 150);
+    const scale = Math.min(1, availW / outerW, availH / outerH);
+    frame.style.transform = `scale(${scale})`;
+    frame.style.padding = bezel ? bezel + 'px' : '0';
+    scaler.style.width = outerW * scale + 'px';
+    scaler.style.height = outerH * scale + 'px';
+    dimEl.textContent = `${w} × ${h}`;
+  }
+
+  modeMobileBtn.addEventListener('click', () => setMode('mobile'));
+  modePcBtn.addEventListener('click', () => setMode('pc'));
+
+  deviceSel.addEventListener('change', () => {
+    currentPhone = PHONES[Number(deviceSel.value)];
+    applySize();
+  });
+  pcSizeSel.addEventListener('change', () => {
+    currentDesktop = DESKTOPS[Number(pcSizeSel.value)];
+    applySize();
+  });
+  rotateBtn.addEventListener('click', () => {
+    landscape = !landscape;
+    applySize();
+  });
+  reloadBtn.addEventListener('click', () => {
+    iframe.src = 'index.html?t=' + Date.now();
+  });
+  window.addEventListener('resize', applySize);
+
+  // Optional: ?mode=pc on the preview URL
+  const params = new URLSearchParams(location.search);
+  setMode(params.get('mode') === 'pc' ? 'pc' : 'mobile');
+</script>
+</body>
+</html>

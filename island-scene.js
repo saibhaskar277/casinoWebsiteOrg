@@ -917,6 +917,19 @@
     };
   }
 
+  /**
+   * Art -> coordinates relative to the stage's own top-left. Hotspots and the
+   * route SVG are children of #stage, so they must NOT include the stage's
+   * viewport offset (which breaks once the stage is centered, e.g. dev phone frame).
+   */
+  function artToStage(ax, ay) {
+    computeCover();
+    return {
+      left: ax * view.scaleX,
+      top: ay * view.scaleY,
+    };
+  }
+
   function screenToArt(clientX, clientY) {
     computeCover();
     return {
@@ -930,7 +943,7 @@
       const el = document.querySelector(`.hotspot[data-spot="${id}"]`);
       if (!el) return;
       const h = HOTSPOTS[id];
-      const s = artToScreen(h.x, h.y);
+      const s = artToStage(h.x, h.y);
       el.style.left = `${s.left}px`;
       el.style.top = `${s.top}px`;
       // Origin is the circle center; board extends to the right from here.
@@ -944,10 +957,13 @@
     const svg = document.getElementById('route-svg');
     const path = document.getElementById('route-path');
     if (!svg || !path) return;
-    svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+    const stage = document.getElementById('stage');
+    const vw = stage ? stage.clientWidth : window.innerWidth;
+    const vh = stage ? stage.clientHeight : window.innerHeight;
+    svg.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
     const [a, b, c, d, e] = [1, 3, 2, 5, 4].map((id) => {
       const h = HOTSPOTS[id];
-      return artToScreen(h.x, h.y);
+      return artToStage(h.x, h.y);
     });
     path.setAttribute(
       'd',
@@ -1139,7 +1155,19 @@
 
     // Soft waterline shadow grounds the ship without darkening its artwork.
     if (shipMesh) {
-      const shadowLoc = pxToLocal(160, 500, 280, 50);
+      const shipLayer = LAYOUT.props.find((p) => p.id === 'ship');
+      let shadowPx = { x: 160, y: 500, w: 280, h: 50 };
+      if (shipLayer) {
+        const sw = Number(shipLayer.w) * (shipLayer.scale == null ? 1 : Number(shipLayer.scale));
+        const sh = Number(shipLayer.h) * (shipLayer.scale == null ? 1 : Number(shipLayer.scale));
+        shadowPx = {
+          x: Number(shipLayer.x) + sw * 0.12,
+          y: Number(shipLayer.y) + sh * 0.72,
+          w: sw * 0.68,
+          h: Math.max(36, sh * 0.14),
+        };
+      }
+      const shadowLoc = pxToLocal(shadowPx.x, shadowPx.y, shadowPx.w, shadowPx.h);
       const shadowMat = new THREE.MeshBasicMaterial({
         map: makeShadowTex(),
         transparent: true,
