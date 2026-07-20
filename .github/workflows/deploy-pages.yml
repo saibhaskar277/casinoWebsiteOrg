@@ -30,7 +30,7 @@ jobs:
         run: |
           REV="$(git rev-parse --short HEAD)"
           mkdir -p _site
-          cp index.html island-scene.js _site/
+          cp index.html island-scene.js casino-hero.js _site/
           cp -r assets _site/assets
           if [ -f CNAME ]; then cp CNAME _site/CNAME; fi
           # Bust browser/CDN cache for layout.json + scene script on every deploy.

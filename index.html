@@ -1043,8 +1043,8 @@ const panelContent = document.getElementById('panel-content');
 async function openPanel(id){
   const c = content[id];
   let body = c.body;
-  if (id === 1) {
-    await window.casinoHeroReady;
+  if (id === 1 && typeof window.buildCasinoHeroScene === 'function') {
+    await (window.casinoHeroReady || Promise.resolve());
     body = window.buildCasinoHeroScene() + body;
   }
   panelContent.innerHTML = `
