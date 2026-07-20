@@ -156,9 +156,8 @@
     'fort',
     'fortWaves',
     'wake',
-    'flagShip',
-    'flagFort',
-    'flagVillage',
+    // Flags are parented to landmarks (not aspect-scaled on their own) so they
+    // stay on the mast at every viewport size — Dev Pixel and GitHub Pages phone.
   ]);
 
   function syncLandmarkAspect() {
@@ -1152,16 +1151,22 @@
       propMeshes.fortWaves.position.z = propMeshes.fort.position.z + 0.4;
       propMeshes.fortWaves.userData.basePos = propMeshes.fortWaves.position.clone();
     }
-    // Flags sit just in front of their parent landmarks.
+    // Parent flags to landmarks so aspect-correction / viewport stretch cannot
+    // pull them off the mast (same look in Dev preview and on GitHub Pages).
     [
       ['flagShip', 'ship'],
       ['flagVillage', 'village'],
       ['flagFort', 'fort'],
     ].forEach(([flagId, parentId]) => {
-      if (propMeshes[flagId] && propMeshes[parentId]) {
-        propMeshes[flagId].position.z = propMeshes[parentId].position.z + 0.2;
-        propMeshes[flagId].userData.basePos = propMeshes[flagId].position.clone();
-      }
+      const flag = propMeshes[flagId];
+      const parent = propMeshes[parentId];
+      if (!flag || !parent) return;
+      const localX = flag.position.x - parent.position.x;
+      const localY = flag.position.y - parent.position.y;
+      parent.add(flag);
+      flag.position.set(localX, localY, 0.2);
+      flag.userData.basePos = flag.position.clone();
+      flag.userData.parentedLandmark = parentId;
     });
 
     // Soft waterline shadow grounds the ship without darkening its artwork.
@@ -1492,14 +1497,13 @@
           if (wakeMat) wakeMat.userData.uSwell.value = heave;
         }
         if (propMeshes.flagShip) {
-          // Rigidly attach the flag to the mast: rotate its offset from the
-          // ship's pivot by the same roll angle, then add the same surge/heave.
+          // Flag is parented to the ship — basePos is the local mast offset.
           const fb = propMeshes.flagShip.userData.basePos;
           const theta = roll * 0.02;
-          const dx = fb.x - b.x;
-          const dy = fb.y - b.y;
-          propMeshes.flagShip.position.x = b.x + surge * 0.006 + dx - theta * dy;
-          propMeshes.flagShip.position.y = b.y + heave * 0.008 + dy + theta * dx;
+          const dx = fb.x;
+          const dy = fb.y;
+          propMeshes.flagShip.position.x = dx - theta * dy;
+          propMeshes.flagShip.position.y = dy + theta * dx;
           propMeshes.flagShip.rotation.z = theta;
         }
       }
