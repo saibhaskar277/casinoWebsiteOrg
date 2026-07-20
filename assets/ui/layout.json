@@ -107,6 +107,48 @@
       "anchorY": 0.42
     }
   },
+  "mobileHotspots": {
+    "1": {
+      "label": "Casino Games Development",
+      "x": 250,
+      "y": 640,
+      "numberScale": 0.855,
+      "textScale": 0.855,
+      "anchorY": 0.42
+    },
+    "2": {
+      "label": "Casual & Hyper Casual Games",
+      "x": 850,
+      "y": 560,
+      "numberScale": 0.855,
+      "textScale": 0.855,
+      "anchorY": 0.42
+    },
+    "3": {
+      "label": "About Our Team",
+      "x": 450,
+      "y": 800,
+      "numberScale": 0.855,
+      "textScale": 0.855,
+      "anchorY": 0.42
+    },
+    "4": {
+      "label": "Our Technology & Services",
+      "x": 320,
+      "y": 1560,
+      "numberScale": 0.855,
+      "textScale": 0.855,
+      "anchorY": 0.42
+    },
+    "5": {
+      "label": "Our Portfolio & Clients",
+      "x": 640,
+      "y": 1000,
+      "numberScale": 0.855,
+      "textScale": 0.855,
+      "anchorY": 0.42
+    }
+  },
   "footer": {
     "bottomPx": 20,
     "fontPx": 12.5,

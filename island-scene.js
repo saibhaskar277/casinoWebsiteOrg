@@ -32,12 +32,34 @@
   const layoutFetch = (path) =>
     fetch(`${path}?v=${layoutRev}`, { cache: 'no-store' });
 
+  /** Portrait phones get the dedicated 1080x1920 scene. */
+  const MOBILE_MEDIA = '(max-width: 760px)';
+  function isMobileViewport() {
+    return (
+      window.matchMedia(MOBILE_MEDIA).matches ||
+      window.innerHeight > window.innerWidth
+    );
+  }
+  let usingMobileScene = false;
+
   async function loadConfigs() {
-    const [sceneRes, uiRes] = await Promise.all([
-      layoutFetch('assets/scene/layout.json'),
-      layoutFetch('assets/ui/layout.json'),
-    ]);
-    if (!sceneRes.ok) throw new Error('Failed to load assets/scene/layout.json');
+    usingMobileScene = isMobileViewport();
+    // Mobile: try the portrait layout, fall back to the desktop scene if missing.
+    let sceneRes = null;
+    if (usingMobileScene) {
+      try {
+        const mobRes = await layoutFetch('assets/scene/layout.mobile.json');
+        if (mobRes.ok) sceneRes = mobRes;
+        else usingMobileScene = false;
+      } catch (_) {
+        usingMobileScene = false;
+      }
+    }
+    const uiRes = await layoutFetch('assets/ui/layout.json');
+    if (!sceneRes) {
+      sceneRes = await layoutFetch('assets/scene/layout.json');
+    }
+    if (!sceneRes.ok) throw new Error('Failed to load scene layout.json');
     const scene = await sceneRes.json();
     ART_W = scene.artWidth || 1920;
     ART_H = scene.artHeight || 960;
@@ -79,9 +101,11 @@
 
     if (uiRes.ok) {
       const ui = await uiRes.json();
-      if (ui.hotspots) {
-        Object.keys(ui.hotspots).forEach((id) => {
-          const h = ui.hotspots[id];
+      const hotspots =
+        usingMobileScene && ui.mobileHotspots ? ui.mobileHotspots : ui.hotspots;
+      if (hotspots) {
+        Object.keys(hotspots).forEach((id) => {
+          const h = hotspots[id];
           HOTSPOTS[id] = {
             x: Number(h.x),
             y: Number(h.y),
@@ -1283,6 +1307,17 @@
       resize();
       positionHotspots();
       updateRoute();
+    });
+
+    // Swapping between the desktop (1920x960) and portrait (1080x1920) scenes
+    // needs a full rebuild — reload once when the viewport crosses the boundary.
+    let reloadingForBreakpoint = false;
+    window.addEventListener('resize', () => {
+      if (reloadingForBreakpoint) return;
+      if (isMobileViewport() !== usingMobileScene) {
+        reloadingForBreakpoint = true;
+        window.location.reload();
+      }
     });
     if ('ResizeObserver' in window) {
       const stageObserver = new ResizeObserver(() => {
