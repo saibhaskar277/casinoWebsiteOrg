@@ -253,8 +253,21 @@
   }
 
   function previewSrc() {
-    // Bust HTML + force the scene scripts to re-fetch layout/art.
-    return `index.html?dev=1&nocache=${Date.now()}`;
+    return `index.html?dev=1&nocache=${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  async function hardReloadPreview() {
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch (_) { /* ignore */ }
+    // Drop the old document completely, then load a fresh cache-busted URL.
+    iframe.src = 'about:blank';
+    requestAnimationFrame(() => {
+      iframe.src = previewSrc();
+    });
   }
 
   function setMode(next) {
@@ -315,16 +328,16 @@
     landscape = !landscape;
     applySize();
   });
+  reloadBtn.title = 'Hard-reload: clear caches + refetch layout, JS, and art';
   reloadBtn.addEventListener('click', () => {
-    iframe.src = previewSrc();
+    hardReloadPreview();
   });
   exitDev.addEventListener('click', () => {
     try {
       sessionStorage.removeItem('ti-dev-viewport');
       sessionStorage.removeItem('ti-force-layout');
     } catch (_) { /* ignore */ }
-    // Plain full-page Normal view (no size lock).
-    exitDev.href = `index.html?nocache=${Date.now()}`;
+    exitDev.href = `index.html?nocache=${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   });
   window.addEventListener('resize', applySize);
 

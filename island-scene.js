@@ -32,14 +32,15 @@
     location.hostname === 'localhost' ||
     location.hostname === '127.0.0.1' ||
     location.hostname === '[::1]';
-  // Local: always unique so layout/art edits are never served from cache.
+  // Always unique per page load so layout + textures cannot stick in HTTP cache.
   const layoutRev =
-    isLocalHost || DEPLOY_REV.includes('DEPLOY_REV')
-      ? String(Date.now())
+    isLocalHost || DEPLOY_REV.includes('DEPLOY_REV') || /(?:\?|&)(?:nocache|dev)=/.test(location.search)
+      ? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
       : DEPLOY_REV;
   const layoutFetch = (path) =>
-    fetch(`${path}?v=${layoutRev}&r=${Math.random().toString(36).slice(2)}`, {
+    fetch(`${path}?v=${encodeURIComponent(layoutRev)}`, {
       cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
 
   /** Portrait phones get the dedicated 1080x1920 scene. */
@@ -205,8 +206,8 @@
       url = SCENE_BASE + file;
     }
     url = url.split('/').map((seg) => encodeURIComponent(decodeURIComponent(seg))).join('/');
-    // Bust stale image caches — art files change without renaming.
-    return `${url}?v=${layoutRev}`;
+    // Unique per load — forces browser + GPU texture cache to drop stale art.
+    return `${url}?v=${encodeURIComponent(layoutRev)}`;
   }
 
   function loadTex(file) {
