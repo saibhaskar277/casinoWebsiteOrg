@@ -172,22 +172,21 @@
     Mobile device sizes simulate phones (different scene file).
   */
   const PHONES = [
-    // Closest to real Chrome on Pixel 8 (URL bar / toolbars eat height).
-    { name: 'Pixel 8 — Chrome (best match)', w: 412, h: 780 },
-    // Full CSS screen size (no browser chrome) — taller than real browsing.
-    { name: 'Pixel 8 — full screen', w: 412, h: 915 },
+    // Real Pixel 8 CSS size (412×915). Site uses 100lvh so production matches this.
+    { name: 'Pixel 8', w: 412, h: 915 },
     { name: 'Pixel 8 Pro', w: 448, h: 998 },
-    { name: 'iPhone 15 — Safari UI', w: 393, h: 720 },
     { name: 'iPhone 15 / 14 Pro', w: 393, h: 852 },
     { name: 'iPhone SE', w: 375, h: 667 },
     { name: 'Galaxy S20', w: 360, h: 800 },
   ];
 
   function displaySize() {
+    // Same CSS viewport Normal gets in THIS browser window (not the whole monitor).
+    // Outer frame scale only shrinks the preview visually — layout stays identical.
     return {
-      name: 'This display (match Normal)',
-      w: Math.max(1024, window.screen.availWidth || window.innerWidth),
-      h: Math.max(640, window.screen.availHeight || window.innerHeight),
+      name: 'Match Normal (this window)',
+      w: Math.max(1024, window.innerWidth),
+      h: Math.max(640, window.innerHeight),
     };
   }
 
@@ -273,8 +272,8 @@
     frame.classList.toggle('desktop', !isMobile);
     titleEl.textContent = isMobile ? '📱 Mobile Preview' : '🖥️ PC Preview';
     hintEl.innerHTML = isMobile
-      ? 'Use <code>Pixel 8 — Chrome (best match)</code> for real-phone proportions. Full-screen 915px is taller than Chrome with the URL bar. Same code/layout as production — only the viewport size differs.'
-      : 'Scaled-down Normal view. Prefer <code>This display</code> so proportions match ↗ Normal view. Reload after art/layout edits.';
+      ? 'Separate mobile layout (<code>layout.mobile.json</code>). Tune flags here for phones — independent from PC. Hit Reload after edits.'
+      : 'Separate PC layout (<code>layout.json</code>). Match Normal uses this window size. Mobile mode is a different scene.';
     iframe.src = previewSrc();
     applySize();
   }
