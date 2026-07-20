@@ -110,42 +110,42 @@
   "mobileHotspots": {
     "1": {
       "label": "Casino Games Development",
-      "x": 280,
+      "x": 265,
       "y": 690,
-      "numberScale": 0.821,
-      "textScale": 0.821,
+      "numberScale": 0.542,
+      "textScale": 0.542,
       "anchorY": 0.42
     },
     "2": {
       "label": "Casual & Hyper Casual Games",
       "x": 820,
       "y": 540,
-      "numberScale": 0.821,
-      "textScale": 0.821,
+      "numberScale": 0.542,
+      "textScale": 0.542,
       "anchorY": 0.42
     },
     "3": {
       "label": "About Our Team",
       "x": 470,
       "y": 920,
-      "numberScale": 0.821,
-      "textScale": 0.821,
+      "numberScale": 0.542,
+      "textScale": 0.542,
       "anchorY": 0.42
     },
     "4": {
       "label": "Our Technology & Services",
       "x": 390,
       "y": 1680,
-      "numberScale": 0.821,
-      "textScale": 0.821,
+      "numberScale": 0.542,
+      "textScale": 0.542,
       "anchorY": 0.42
     },
     "5": {
       "label": "Our Portfolio & Clients",
       "x": 700,
       "y": 1220,
-      "numberScale": 0.821,
-      "textScale": 0.821,
+      "numberScale": 0.542,
+      "textScale": 0.542,
       "anchorY": 0.42
     }
   },
@@ -157,10 +157,10 @@
   },
   "mobile": {
     "maxWidthPx": 760,
-    "numberBoardScale": 0.749,
-    "textBoardScale": 0.864,
-    "textFontScale": 1.104,
-    "badgeFontScale": 1.056,
+    "numberBoardScale": 0.494,
+    "textBoardScale": 0.57,
+    "textFontScale": 0.728,
+    "badgeFontScale": 0.697,
     "titleWidthPct": 78,
     "titleScale": 0.84,
     "textOffsetX": 0,

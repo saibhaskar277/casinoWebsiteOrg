@@ -819,7 +819,7 @@ body.panel-open .stage{
 
   /* Match --isle-size to the mobile medallion width below. */
   .hotspot{
-    --isle-size:clamp(41px, 10.8vw, 58px);
+    --isle-size:clamp(28px, 7.15vw, 39px);
   }
 
   /*
@@ -851,21 +851,42 @@ body.panel-open .stage{
     padding:var(--tb-pad-top, 16%) var(--tb-pad-left, 26%) var(--tb-pad-bottom, 16%) var(--tb-pad-x, 10%);
   }
 
-  /* Section boards: text/boards +20% from prior mobile sizes. */
+  /* Section boards: number + text (+10% from prior mobile sizes). */
   .hotspot .isle{
     width:var(--isle-size) !important;
   }
   .hotspot .tag{
-    width:clamp(132px, 38vw, 178px) !important;
-    font-size:clamp(9px, 2.6vw, 11.4px) !important;
-    line-height:1.1;
+    /* Wider + taller box so full labels wrap inside the wood */
+    width:clamp(97px, 26.4vw, 130px) !important;
+    aspect-ratio:520 / 280 !important;
+    font-size:clamp(5.5px, 1.27vw, 6.8px) !important;
+    line-height:1.05 !important;
     font-weight:800;
-    letter-spacing:0.1px;
+    letter-spacing:-0.1px !important;
     white-space:normal;
-    overflow:hidden;
+    overflow:hidden !important;
+    word-break:break-word;
+    hyphens:auto;
+    padding:18% 9% 18% 26% !important;
+    box-sizing:border-box;
+  }
+  .hotspot[data-spot="2"] .tag,
+  .hotspot[data-spot="3"] .tag,
+  .hotspot[data-spot="5"] .tag{
+    padding:18% 26% 18% 9% !important;
+  }
+  /* 01 / 05: long labels — a touch more width */
+  .hotspot[data-spot="1"] .tag,
+  .hotspot[data-spot="5"] .tag{
+    width:clamp(106px, 28.6vw, 141px) !important;
+    font-size:clamp(5.3px, 1.21vw, 6.6px) !important;
+    padding:20% 10% 20% 28% !important;
+  }
+  .hotspot[data-spot="5"] .tag{
+    padding:20% 28% 20% 10% !important;
   }
   .hotspot .badge{
-    font-size:clamp(9.6px, 2.6vw, 13.2px) !important;
+    font-size:clamp(6.6px, 1.54vw, 8.3px) !important;
   }
 
   @keyframes bob{
