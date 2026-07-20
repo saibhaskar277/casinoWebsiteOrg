@@ -40,7 +40,7 @@
     color:#eaf6ff;
   }
   .toolbar label{ font-size:12px; opacity:.75; }
-  select, button{
+  select, button, a.exit-link{
     font:inherit;
     font-size:13px;
     color:#eaf6ff;
@@ -49,22 +49,11 @@
     border-radius:8px;
     padding:7px 12px;
     cursor:pointer;
+    text-decoration:none;
   }
-  select:hover, button:hover{ background:#1f4257; }
+  select:hover, button:hover, a.exit-link:hover{ background:#1f4257; }
   button.primary{ background:#e2643f; border-color:transparent; font-weight:700; }
   button.primary:hover{ background:#f2764f; }
-  a.exit-link{
-    font:inherit;
-    font-size:13px;
-    color:#eaf6ff;
-    text-decoration:none;
-    background:#173040;
-    border:1px solid rgba(255,255,255,.18);
-    border-radius:8px;
-    padding:7px 12px;
-    cursor:pointer;
-  }
-  a.exit-link:hover{ background:#1f4257; }
   button.active{
     background:#2a6a86;
     border-color:rgba(255,255,255,.35);
@@ -92,7 +81,6 @@
     top:0; left:0;
     transform-origin:top left;
   }
-  /* Phone chrome */
   .frame.phone{
     padding:14px;
     border-radius:44px;
@@ -117,7 +105,6 @@
     border-radius:30px;
     box-shadow:0 0 0 1px rgba(0,0,0,.5);
   }
-  /* Desktop chrome */
   .frame.desktop{
     padding:0;
     border-radius:12px;
@@ -127,10 +114,7 @@
       0 24px 60px rgba(0,0,0,.55);
     overflow:hidden;
   }
-  .frame.desktop iframe{
-    border-radius:0;
-    box-shadow:none;
-  }
+  .frame.desktop iframe{ border-radius:0; box-shadow:none; }
   iframe{
     display:block;
     border:0;
@@ -138,10 +122,9 @@
   }
   .hint{
     font-size:12px;
-    opacity:.6;
-    margin-top:2px;
+    opacity:.65;
     text-align:center;
-    max-width:560px;
+    max-width:620px;
     line-height:1.5;
   }
   .hint code{
@@ -155,51 +138,63 @@
 </head>
 <body>
   <div class="toolbar">
-    <h1 id="title">📱 Mobile Preview</h1>
+    <h1 id="title">🖥️ Dev Preview</h1>
     <div class="mode-toggle">
-      <button type="button" id="modeMobile" class="active">Mobile</button>
-      <button type="button" id="modePc">PC</button>
+      <button type="button" id="modePc" class="active">PC</button>
+      <button type="button" id="modeMobile">Mobile</button>
     </div>
-    <label class="mobile-only">Device
-      <select id="device"></select>
-    </label>
-    <label class="pc-only hidden">Viewport
+    <label class="pc-only">Viewport
       <select id="pcSize"></select>
     </label>
-    <button id="rotate" class="mobile-only" title="Rotate">⟲ Rotate</button>
+    <label class="mobile-only hidden">Device
+      <select id="device"></select>
+    </label>
+    <button id="rotate" class="mobile-only hidden" title="Rotate">⟲ Rotate</button>
     <span class="dim" id="dim">—</span>
-    <button id="reload" class="primary" title="Reload after editing layout">↻ Reload</button>
-    <a id="exitDev" class="exit-link" href="index.html" title="Leave preview and open the real site">↗ Normal view</a>
-    <span class="hint" id="hint">Edit <code>assets/scene/layout.mobile.json</code> then hit Reload. Widths under 760px load the portrait scene automatically.</span>
+    <button id="reload" class="primary" title="Hard-reload layout + art (bypass cache)">↻ Reload</button>
+    <a id="exitDev" class="exit-link" href="index.html" title="Open the real full-page site">↗ Normal view</a>
+    <span class="hint" id="hint"></span>
   </div>
 
   <div class="stage-wrap">
     <div class="scaler" id="scaler">
-      <div class="frame phone" id="frame">
-        <iframe id="preview" src="index.html" title="Site preview"></iframe>
+      <div class="frame desktop" id="frame">
+        <iframe id="preview" title="Site preview"></iframe>
       </div>
     </div>
   </div>
 
 <script>
-  // Logical (CSS) viewport sizes so vw units and media queries match the real device.
+  /*
+    Dev = same page as Normal, only visually scaled down (CSS transform).
+    The iframe keeps a real CSS width/height so layout matches that size.
+    Use PC → "This display" to mirror Normal on your monitor.
+    Mobile device sizes simulate phones (different scene file).
+  */
   const PHONES = [
-    { name: 'Art 9:16 (exact)', w: 390, h: 693 },
-    { name: 'Pixel 8', w: 412, h: 915 },
-    { name: 'Pixel 8 (Chrome UI)', w: 412, h: 780 },
+    // Closest to real Chrome on Pixel 8 (URL bar / toolbars eat height).
+    { name: 'Pixel 8 — Chrome (best match)', w: 412, h: 780 },
+    // Full CSS screen size (no browser chrome) — taller than real browsing.
+    { name: 'Pixel 8 — full screen', w: 412, h: 915 },
     { name: 'Pixel 8 Pro', w: 448, h: 998 },
+    { name: 'iPhone 15 — Safari UI', w: 393, h: 720 },
     { name: 'iPhone 15 / 14 Pro', w: 393, h: 852 },
-    { name: 'iPhone 15 (Safari UI)', w: 393, h: 720 },
-    { name: 'iPhone 15 Pro Max', w: 430, h: 932 },
     { name: 'iPhone SE', w: 375, h: 667 },
     { name: 'Galaxy S20', w: 360, h: 800 },
-    { name: 'Small phone', w: 320, h: 568 },
   ];
 
+  function displaySize() {
+    return {
+      name: 'This display (match Normal)',
+      w: Math.max(1024, window.screen.availWidth || window.innerWidth),
+      h: Math.max(640, window.screen.availHeight || window.innerHeight),
+    };
+  }
+
   const DESKTOPS = [
+    displaySize(),
     { name: 'Laptop 1366', w: 1366, h: 768 },
     { name: 'Desktop 1440', w: 1440, h: 900 },
-    { name: 'Desktop 1600', w: 1600, h: 900 },
     { name: 'Full HD 1920', w: 1920, h: 1080 },
     { name: 'Art canvas 1920×960', w: 1920, h: 960 },
   ];
@@ -216,39 +211,20 @@
   const modePcBtn = document.getElementById('modePc');
   const titleEl = document.getElementById('title');
   const hintEl = document.getElementById('hint');
-
   const exitDev = document.getElementById('exitDev');
 
   const PHONE_BEZEL = 14;
 
-  let mode = 'mobile'; // 'mobile' | 'pc'
-  let currentPhone = PHONES[1]; // Pixel 8 — common real device size
-  let currentDesktop = DESKTOPS[1]; // 1440 default
+  let mode = 'pc';
+  let currentPhone = PHONES[0];
+  let currentDesktop = DESKTOPS[0];
   let landscape = false;
 
-  function currentSize() {
-    if (mode === 'mobile') {
-      return {
-        w: landscape ? currentPhone.h : currentPhone.w,
-        h: landscape ? currentPhone.w : currentPhone.h,
-      };
-    }
-    return { w: currentDesktop.w, h: currentDesktop.h };
-  }
-
-  function previewSrc() {
-    const layout = mode === 'mobile' ? 'mobile=1' : 'desktop=1';
-    return `index.html?${layout}&t=${Date.now()}`;
-  }
-
-  function rememberViewport() {
-    const { w, h } = currentSize();
-    sessionStorage.setItem(
-      'ti-dev-viewport',
-      JSON.stringify({ w, h, mode: mode === 'mobile' ? 'mobile' : 'desktop' })
-    );
-    sessionStorage.setItem('ti-force-layout', mode === 'mobile' ? 'mobile' : 'desktop');
-  }
+  // Clear leftover locks from older preview builds.
+  try {
+    sessionStorage.removeItem('ti-dev-viewport');
+    sessionStorage.removeItem('ti-force-layout');
+  } catch (_) { /* ignore */ }
 
   PHONES.forEach((d, i) => {
     const opt = document.createElement('option');
@@ -262,8 +238,25 @@
     opt.textContent = `${d.name} (${d.w}×${d.h})`;
     pcSizeSel.appendChild(opt);
   });
-  pcSizeSel.value = '1';
-  deviceSel.value = '1';
+
+  function currentSize() {
+    if (mode === 'mobile') {
+      return {
+        w: landscape ? currentPhone.h : currentPhone.w,
+        h: landscape ? currentPhone.w : currentPhone.h,
+      };
+    }
+    // Refresh "This display" from the live screen each time.
+    if (Number(pcSizeSel.value) === 0) {
+      currentDesktop = displaySize();
+    }
+    return { w: currentDesktop.w, h: currentDesktop.h };
+  }
+
+  function previewSrc() {
+    // Bust HTML + force the scene scripts to re-fetch layout/art.
+    return `index.html?dev=1&nocache=${Date.now()}`;
+  }
 
   function setMode(next) {
     mode = next;
@@ -280,8 +273,8 @@
     frame.classList.toggle('desktop', !isMobile);
     titleEl.textContent = isMobile ? '📱 Mobile Preview' : '🖥️ PC Preview';
     hintEl.innerHTML = isMobile
-      ? 'Same CSS size as Normal view. Edit <code>layout.mobile.json</code>, Reload, then open Normal view — flags/layout will match exactly.'
-      : 'Same CSS size as Normal view. Edit <code>layout.json</code>, Reload, then open Normal view to match.';
+      ? 'Use <code>Pixel 8 — Chrome (best match)</code> for real-phone proportions. Full-screen 915px is taller than Chrome with the URL bar. Same code/layout as production — only the viewport size differs.'
+      : 'Scaled-down Normal view. Prefer <code>This display</code> so proportions match ↗ Normal view. Reload after art/layout edits.';
     iframe.src = previewSrc();
     applySize();
   }
@@ -290,10 +283,10 @@
     const { w, h } = currentSize();
     const bezel = mode === 'mobile' ? PHONE_BEZEL : 0;
 
-    // Keep the iframe at the TRUE viewport size so vw/media queries match reality...
+    // Logical CSS size (layout) — NOT affected by the visual scale below.
     iframe.style.width = w + 'px';
     iframe.style.height = h + 'px';
-    // ...then visually scale the frame to fit the available space.
+
     const outerW = w + bezel * 2;
     const outerH = h + bezel * 2;
     const availW = Math.max(280, window.innerWidth - 48);
@@ -303,8 +296,7 @@
     frame.style.padding = bezel ? bezel + 'px' : '0';
     scaler.style.width = outerW * scale + 'px';
     scaler.style.height = outerH * scale + 'px';
-    dimEl.textContent = `${w} × ${h}`;
-    rememberViewport();
+    dimEl.textContent = `${w}×${h} @ ${Math.round(scale * 100)}%`;
   }
 
   modeMobileBtn.addEventListener('click', () => setMode('mobile'));
@@ -315,7 +307,9 @@
     applySize();
   });
   pcSizeSel.addEventListener('change', () => {
-    currentDesktop = DESKTOPS[Number(pcSizeSel.value)];
+    currentDesktop = Number(pcSizeSel.value) === 0
+      ? displaySize()
+      : DESKTOPS[Number(pcSizeSel.value)];
     applySize();
   });
   rotateBtn.addEventListener('click', () => {
@@ -325,17 +319,18 @@
   reloadBtn.addEventListener('click', () => {
     iframe.src = previewSrc();
   });
-  exitDev.addEventListener('click', (e) => {
-    e.preventDefault();
-    rememberViewport();
-    const layout = mode === 'mobile' ? 'mobile=1' : 'desktop=1';
-    location.href = `index.html?fromDev=1&${layout}`;
+  exitDev.addEventListener('click', () => {
+    try {
+      sessionStorage.removeItem('ti-dev-viewport');
+      sessionStorage.removeItem('ti-force-layout');
+    } catch (_) { /* ignore */ }
+    // Plain full-page Normal view (no size lock).
+    exitDev.href = `index.html?nocache=${Date.now()}`;
   });
   window.addEventListener('resize', applySize);
 
-  // Optional: ?mode=pc on the preview URL
   const params = new URLSearchParams(location.search);
-  setMode(params.get('mode') === 'pc' ? 'pc' : 'mobile');
+  setMode(params.get('mode') === 'mobile' ? 'mobile' : 'pc');
 </script>
 </body>
 </html>

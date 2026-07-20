@@ -28,22 +28,23 @@
 
   /** Replaced with git short SHA on GitHub Pages deploy; local dev falls back to live reload. */
   const DEPLOY_REV = '__DEPLOY_REV__';
-  const layoutRev = DEPLOY_REV.includes('DEPLOY_REV') ? String(Date.now()) : DEPLOY_REV;
+  const isLocalHost =
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1' ||
+    location.hostname === '[::1]';
+  // Local: always unique so layout/art edits are never served from cache.
+  const layoutRev =
+    isLocalHost || DEPLOY_REV.includes('DEPLOY_REV')
+      ? String(Date.now())
+      : DEPLOY_REV;
   const layoutFetch = (path) =>
-    fetch(`${path}?v=${layoutRev}`, { cache: 'no-store' });
+    fetch(`${path}?v=${layoutRev}&r=${Math.random().toString(36).slice(2)}`, {
+      cache: 'no-store',
+    });
 
   /** Portrait phones get the dedicated 1080x1920 scene. */
   const MOBILE_MEDIA = '(max-width: 760px)';
   function isMobileViewport() {
-    // Dev preview can force a layout so Normal view matches the iframe exactly.
-    try {
-      const q = new URLSearchParams(window.location.search);
-      if (q.get('mobile') === '1' || q.get('view') === 'mobile') return true;
-      if (q.get('desktop') === '1' || q.get('view') === 'desktop') return false;
-      const locked = sessionStorage.getItem('ti-force-layout');
-      if (locked === 'mobile') return true;
-      if (locked === 'desktop') return false;
-    } catch (_) { /* ignore */ }
     return (
       window.matchMedia(MOBILE_MEDIA).matches ||
       window.innerHeight > window.innerWidth
@@ -1349,15 +1350,9 @@
 
     // Swapping between the desktop (1920x960) and portrait (1080x1920) scenes
     // needs a full rebuild — reload once when the viewport crosses the boundary.
-    // Skip auto-reload when layout is forced from the dev preview.
     let reloadingForBreakpoint = false;
     window.addEventListener('resize', () => {
       if (reloadingForBreakpoint) return;
-      try {
-        if (sessionStorage.getItem('ti-force-layout')) return;
-        const q = new URLSearchParams(window.location.search);
-        if (q.get('mobile') || q.get('desktop') || q.get('view')) return;
-      } catch (_) { /* ignore */ }
       if (isMobileViewport() !== usingMobileScene) {
         reloadingForBreakpoint = true;
         window.location.reload();

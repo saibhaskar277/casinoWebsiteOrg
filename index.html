@@ -413,8 +413,7 @@ body.is-ready .stage{
 }
 .overlay.open{ opacity:1; pointer-events:auto; }
 
-/* Keep stage full-window when the side panel is open (desktop). */
-body.panel-open:not(.dev-viewport-locked) .stage{
+body.panel-open .stage{
   width:100vw !important;
   height:100vh !important;
   height:100dvh !important;
@@ -880,69 +879,9 @@ body.panel-open:not(.dev-viewport-locked) .stage{
 }
 .dev-preview-link:hover{ background:#1f4257; }
 body.show-dev-link .dev-preview-link{ display:inline-flex; align-items:center; gap:6px; }
-
-/* Localhost: Normal view opened from the preview keeps the SAME CSS size as the iframe */
-html.dev-viewport-locked,
-html.dev-viewport-locked body{
-  width:100%;
-  height:100%;
-  height:100dvh;
-  overflow:hidden;
-  background:#0a1620;
-}
-html.dev-viewport-locked .stage{
-  position:absolute !important;
-  left:50% !important;
-  top:50% !important;
-  transform:translate(-50%, -50%);
-  width:var(--dev-vw, 412px) !important;
-  height:var(--dev-vh, 915px) !important;
-  flex-shrink:0;
-  box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 24px 60px rgba(0,0,0,.55);
-}
-html.dev-viewport-locked .boot-loader{
-  position:fixed;
-}
-html.dev-viewport-locked .dev-preview-link{
-  position:fixed;
-}
 </style>
 </head>
 <body class="is-loading">
-<script>
-/* Apply before paint so Normal view matches the last Dev Preview iframe size. */
-(function () {
-  try {
-    const host = location.hostname;
-    const local = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
-    if (!local) {
-      sessionStorage.removeItem('ti-dev-viewport');
-      sessionStorage.removeItem('ti-force-layout');
-      return;
-    }
-    const q = new URLSearchParams(location.search);
-    if (q.get('fromDev') !== '1') {
-      // Plain Normal view / production entry — don't keep a leftover preview lock.
-      sessionStorage.removeItem('ti-dev-viewport');
-      sessionStorage.removeItem('ti-force-layout');
-      return;
-    }
-    const raw = sessionStorage.getItem('ti-dev-viewport');
-    if (!raw) return;
-    const spec = JSON.parse(raw);
-    const w = Number(spec.w);
-    const h = Number(spec.h);
-    if (!(w > 0 && h > 0)) return;
-    document.documentElement.classList.add('dev-viewport-locked');
-    document.body.classList.add('dev-viewport-locked');
-    document.documentElement.style.setProperty('--dev-vw', w + 'px');
-    document.documentElement.style.setProperty('--dev-vh', h + 'px');
-    if (spec.mode === 'mobile' || spec.mode === 'desktop') {
-      sessionStorage.setItem('ti-force-layout', spec.mode);
-    }
-  } catch (_) { /* ignore */ }
-})();
-</script>
 
 <div class="boot-loader" id="boot-loader" role="status" aria-live="polite" aria-busy="true">
   <div class="boot-brand">QUILLS<span>GAME STUDIOS</span></div>
@@ -1194,8 +1133,14 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 (async function applyUiLayout(){
   try{
     const rawRev = document.querySelector('meta[name="site-rev"]')?.content || '';
-    const layoutRev = rawRev.includes('DEPLOY_REV') ? String(Date.now()) : rawRev || String(Date.now());
-    const res = await fetch(`assets/ui/layout.json?v=${layoutRev}`, { cache: 'no-store' });
+    const host = location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+    const layoutRev =
+      isLocal || rawRev.includes('DEPLOY_REV') ? String(Date.now()) : (rawRev || String(Date.now()));
+    const res = await fetch(
+      `assets/ui/layout.json?v=${layoutRev}&r=${Math.random().toString(36).slice(2)}`,
+      { cache: 'no-store' }
+    );
     if(!res.ok) return;
     const cfg = await res.json();
     const artW = cfg.uiArtWidth || 1920;
@@ -1326,22 +1271,14 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 <a class="dev-preview-link" id="dev-preview-link" href="mobile-dev.html">📱 Dev preview</a>
 <script>
 (function () {
-  // Only on local server, and not when already inside the framed preview.
   if (window.self !== window.top) return;
   const host = location.hostname;
   if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') {
     document.body.classList.add('show-dev-link');
-    const link = document.getElementById('dev-preview-link');
-    if (link) {
-      try {
-        const mode = sessionStorage.getItem('ti-force-layout') === 'desktop' ? 'pc' : 'mobile';
-        link.href = 'mobile-dev.html?mode=' + mode;
-        link.addEventListener('click', () => {
-          // Leaving locked Normal view — preview owns sizing again.
-          sessionStorage.removeItem('ti-dev-viewport');
-        });
-      } catch (_) { /* ignore */ }
-    }
+    try {
+      sessionStorage.removeItem('ti-dev-viewport');
+      sessionStorage.removeItem('ti-force-layout');
+    } catch (_) { /* ignore */ }
   }
 })();
 </script>
