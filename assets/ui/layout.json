@@ -15,11 +15,11 @@
     "btnPadX": 14
   },
   "title": {
-    "file": "title-board.png",
+    "file": "Title with board.png",
     "x": 505,
     "y": 0,
     "w": 755,
-    "h": 329,
+    "h": 324,
     "scale": 1,
     "textOffsetX": 40,
     "paddingTopPct": 18,

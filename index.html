@@ -247,7 +247,7 @@ body.is-ready .stage{
   aspect-ratio:var(--title-ratio, 780 / 228);
   height:auto;
   padding:var(--title-pad-top, 4%) var(--title-pad-x, 12%) var(--title-pad-bottom, 4%);
-  background:url('assets/ui/title-board.png') center center / 100% 100% no-repeat;
+  background:url('assets/ui/Title%20with%20board.png') center center / 100% 100% no-repeat;
   pointer-events:none;
   display:flex;
   flex-direction:column;
@@ -256,6 +256,11 @@ body.is-ready .stage{
   gap:var(--title-gap, 3px);
   box-sizing:border-box;
   overflow:hidden;
+}
+/* The replacement title artwork already contains all title text. */
+.hero-copy .hero-eyebrow,
+.hero-copy .hero-title{
+  display:none;
 }
 .hero-eyebrow{
   font-family:'Nunito',sans-serif;
