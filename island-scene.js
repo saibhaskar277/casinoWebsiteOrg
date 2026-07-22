@@ -1303,36 +1303,55 @@
     }
 
     // Birds — assets/birds sprites; fall back to drawn seagull.
+    // In front of mountain / far ship, but behind side palms & leaf overlays.
     const birdTexes = await loadBirdTextures();
-    // Birds render behind all props (z=-3.9), so paths stay in open sky:
-    // left of the title board and along the horizon band below it.
-    const birdPaths = [
-      { cx: -0.66, cy: 0.71, rx: 0.14, ry: 0.05, speed: 0.15, phase: 0 },
-      { cx: -0.55, cy: 0.54, rx: 0.12, ry: 0.04, speed: 0.18, phase: 1.5 },
-      { cx: -0.08, cy: 0.3, rx: 0.22, ry: 0.025, speed: 0.12, phase: 2.6 },
+    const birdZBehindLeaves = Math.min(
+      propMeshes.palmL ? propMeshes.palmL.position.z - 0.2 : 10,
+      propMeshes.palmR2 ? propMeshes.palmR2.position.z - 0.2 : 10,
+      propMeshes.overlayL ? propMeshes.overlayL.position.z - 0.2 : 10,
+      propMeshes.overlayR ? propMeshes.overlayR.position.z - 0.2 : 10
+    );
+    const birdZ =
+      Math.min(
+        birdZBehindLeaves,
+        Math.max(
+          mountainMesh ? mountainMesh.position.z : -4,
+          propMeshes.shipFar ? propMeshes.shipFar.position.z : -4,
+          propMeshes.cloudFront ? propMeshes.cloudFront.position.z : -4
+        ) + 0.35
+      );
+    // Keep flight in the open middle sky — clear of left/right palm foliage.
+    const birdMinX = -0.36;
+    const birdMaxX = 0.4;
+    // Sprites in assets/birds face LEFT; flip scale.x when flying right.
+    const birdFlights = [
+      { y: 0.64, bob: 0.03, bobSpeed: 0.9, speed: 0.0275, x: -0.2, dir: 1, phase: 0.2 },
+      { y: 0.5, bob: 0.024, bobSpeed: 0.75, speed: 0.021, x: 0.12, dir: -1, phase: 1.4 },
+      { y: 0.72, bob: 0.032, bobSpeed: 1.05, speed: 0.03, x: 0.28, dir: 1, phase: 2.7 },
     ];
-    birdPaths.forEach((path, i) => {
+    birdFlights.forEach((flight, i) => {
       const tex = birdTexes[i % birdTexes.length];
       const mat = new THREE.MeshBasicMaterial({
         map: tex,
         transparent: true,
         depthWrite: false,
+        depthTest: true,
         side: THREE.DoubleSide,
       });
-      // Size from the sprite's own pixel dimensions (flock images are wide).
       const img = tex.image;
       const px = img && img.width ? { w: img.width, h: img.height } : { w: 90, h: 40 };
-      const spriteScale = 0.54;
+      const spriteScale = 0.48;
       const bird = new THREE.Mesh(
         new THREE.PlaneGeometry((px.w * spriteScale) / 960, (px.h * spriteScale) / 480),
         mat
       );
-      bird.userData.path = path;
-      // Sprites face right; flip when velocity is leftward.
-      bird.userData.facesRight = true;
-      bird.userData.baseScaleX = 1;
-      // Behind everything except the sky/clouds backdrop (bg z=-5, clouds z=-4).
-      bird.position.z = -3.9;
+      bird.userData.flight = flight;
+      bird.userData.minX = birdMinX;
+      bird.userData.maxX = birdMaxX;
+      bird.userData.facesLeft = true;
+      bird.position.set(flight.x, flight.y, birdZ);
+      bird.scale.set(flight.dir < 0 ? 1 : -1, 1, 1);
+      bird.renderOrder = 900;
       artRoot.add(bird);
       seagulls.push(bird);
     });
@@ -1449,8 +1468,9 @@
   function animate() {
     if (!running) return;
     animId = requestAnimationFrame(animate);
-    const t = clock.getElapsedTime();
+    // getElapsedTime() internally calls getDelta() — so call getDelta once, then read elapsedTime.
     const dt = Math.min(clock.getDelta(), 0.05);
+    const t = clock.elapsedTime;
 
     if (waterMat) {
       waterMat.userData.uTime.value = t;
@@ -1532,18 +1552,27 @@
       });
 
       seagulls.forEach((bird) => {
-        const p = bird.userData.path;
-        const a = t * p.speed + p.phase;
-        bird.position.x = p.cx + Math.cos(a) * p.rx;
-        bird.position.y = p.cy + Math.sin(a) * p.ry;
-        // Face travel direction (sprites are drawn head-to-the-right).
-        // x velocity on the ellipse: dx/dt = -sin(a) * rx * speed
-        const vx = -Math.sin(a) * p.rx * p.speed;
-        if (Math.abs(vx) > 1e-4) {
-          const base = bird.userData.baseScaleX || 1;
-          // Moving right → no flip; moving left → flip so head leads.
-          bird.scale.x = vx > 0 ? base : -base;
+        const f = bird.userData.flight;
+        if (!f) return;
+        const minX = bird.userData.minX ?? -0.36;
+        const maxX = bird.userData.maxX ?? 0.4;
+
+        f.x += f.speed * f.dir * dt;
+
+        // Hit an edge → reverse direction and flip the sprite on X.
+        if (f.dir > 0 && f.x >= maxX) {
+          f.x = maxX;
+          f.dir = -1;
+        } else if (f.dir < 0 && f.x <= minX) {
+          f.x = minX;
+          f.dir = 1;
         }
+
+        bird.position.x = f.x;
+        bird.position.y = f.y + Math.sin(t * f.bobSpeed + f.phase) * f.bob;
+
+        // assets/birds face left: flying left = +1, flying right = -1
+        bird.scale.x = f.dir < 0 ? 1 : -1;
       });
     }
 
