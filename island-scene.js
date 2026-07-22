@@ -463,7 +463,7 @@
 
   /**
    * Cascade flow via UV distortion only (no gloss).
-   * Stronger top→bottom warp; clearest texture scroll in the upper ~40%.
+   * Stronger mid-band scroll + streak so the mountain fall reads as moving water.
    */
   function makeWaterfallMaterial(srcTex, opts) {
     const options = opts || {};
@@ -475,7 +475,7 @@
     });
     mat.userData.uTime = { value: 0 };
     mat.userData.uReduced = { value: reducedMotion ? 1 : 0 };
-    mat.userData.uSpeed = { value: options.speed == null ? 0.85 : options.speed };
+    mat.userData.uSpeed = { value: options.speed == null ? 1.35 : options.speed };
 
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.uTime = mat.userData.uTime;
@@ -504,36 +504,34 @@
         #ifdef USE_MAP
           vec2 uv = vMapUv;
           float t = uTime * (1.0 - uReduced);
-          // Mid-band only: ~30% → 70% of the sheet, soft blend at both edges.
-          float midBand = smoothstep(0.28, 0.38, uv.y) * (1.0 - smoothstep(0.62, 0.72, uv.y));
-          // Light fall warp still runs full height so the cascade feels continuous.
-          float fall = 0.25 + 0.75 * midBand;
+          // Wider active band so more of the cascade sheet flows.
+          float midBand = smoothstep(0.12, 0.28, uv.y) * (1.0 - smoothstep(0.78, 0.94, uv.y));
+          float fall = 0.35 + 0.65 * midBand;
 
-          float n1 = wfNoise(vec2(uv.x * 6.0, uv.y * 14.0 - t * uSpeed * 2.4));
-          float n2 = wfNoise(vec2(uv.x * 16.0, uv.y * 30.0 - t * uSpeed * 3.6));
-          float n3 = wfNoise(vec2(uv.x * 32.0 + t * 0.2, uv.y * 9.0 - t * uSpeed * 1.5));
+          float n1 = wfNoise(vec2(uv.x * 6.0, uv.y * 14.0 - t * uSpeed * 3.2));
+          float n2 = wfNoise(vec2(uv.x * 16.0, uv.y * 30.0 - t * uSpeed * 4.6));
+          float n3 = wfNoise(vec2(uv.x * 32.0 + t * 0.28, uv.y * 9.0 - t * uSpeed * 2.1));
 
           vec2 distort = vec2(
-            (n1 - 0.5) * 0.006 + (n3 - 0.5) * 0.003 + sin(uv.y * 24.0 - t * 2.8) * 0.0018,
-            (n2 - 0.5) * 0.0072 + sin(uv.x * 14.0 + t * 1.6) * 0.0012
+            (n1 - 0.5) * 0.0066 + (n3 - 0.5) * 0.0033 + sin(uv.y * 28.0 - t * 3.4) * 0.00192,
+            (n2 - 0.5) * 0.0078 + sin(uv.x * 16.0 + t * 2.0) * 0.00132
           ) * fall;
 
-          // Downward texture scroll blended only inside the 30–70% band (~40% quieter).
-          float scroll = fract(t * uSpeed * 0.45);
-          float scrollB = fract(t * uSpeed * 0.45 + 0.5);
-          vec2 flowA = distort + vec2(0.0, -scroll * 0.036 * midBand);
-          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0024 * midBand, -scrollB * 0.036 * midBand);
+          // Faster dual-phase downward scroll for a clearer falling-water read.
+          float scroll = fract(t * uSpeed * 0.72);
+          float scrollB = fract(t * uSpeed * 0.72 + 0.5);
+          vec2 flowA = distort + vec2(0.0, -scroll * 0.07 * midBand);
+          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0027 * midBand, -scrollB * 0.07 * midBand);
           float blend = abs(scroll * 2.0 - 1.0);
           vec2 sampleUv = mix(uv + flowA, uv + flowB, blend);
           sampleUv = clamp(sampleUv, vec2(0.02, 0.0), vec2(0.98, 1.0));
 
           vec4 sampledDiffuseColor = texture2D(map, sampleUv);
 
-          // Soft flowing streaks (the earlier waterfall feel) — no hard highlight bands / foam gloss.
-          float fine = wfNoise(vec2(uv.x * 26.0, uv.y * 8.0 + t * uSpeed * 2.6));
-          float coarse = wfNoise(vec2(uv.x * 12.0, uv.y * 4.5 + t * uSpeed * 1.5));
+          float fine = wfNoise(vec2(uv.x * 26.0, uv.y * 8.0 + t * uSpeed * 3.4));
+          float coarse = wfNoise(vec2(uv.x * 12.0, uv.y * 4.5 + t * uSpeed * 2.0));
           float streak = mix(coarse, fine, 0.55);
-          float flow = 1.0 + (streak - 0.5) * 0.28 * (0.55 + 0.45 * midBand);
+          float flow = 1.0 + (streak - 0.5) * 0.42 * (0.45 + 0.55 * midBand);
           sampledDiffuseColor.rgb *= flow;
 
           diffuseColor *= sampledDiffuseColor;
@@ -541,7 +539,7 @@
         `
       );
     };
-    mat.customProgramCacheKey = () => 'island-waterfall-uv-flow-v5';
+    mat.customProgramCacheKey = () => 'island-waterfall-uv-flow-v7';
     return mat;
   }
 
@@ -597,15 +595,15 @@
           float lap = mix(wash, wash2, 0.45);
 
           vec2 distort = vec2(
-            (n1 - 0.5) * 0.025 + sin(uv.y * 28.0 + t * 1.6 + n1 * 4.0) * 0.0107 + (n3 - 0.5) * 0.0078,
-            (lap - 0.5) * 0.0358 + (n2 - 0.5) * 0.0179 + sin(t * 1.3 + uv.x * 6.0) * 0.009 + (n3 - 0.5) * 0.0059
+            (n1 - 0.5) * 0.015 + sin(uv.y * 28.0 + t * 1.6 + n1 * 4.0) * 0.00642 + (n3 - 0.5) * 0.00468,
+            (lap - 0.5) * 0.02148 + (n2 - 0.5) * 0.01074 + sin(t * 1.3 + uv.x * 6.0) * 0.0054 + (n3 - 0.5) * 0.00354
           ) * zone;
 
           // Soft dual-phase scroll in the active zone so texture clearly drifts.
-          float scroll = fract(t * 0.32);
-          float scrollB = fract(t * 0.32 + 0.5);
-          vec2 flowA = distort + vec2((n3 - 0.5) * 0.0072, -scroll * 0.0715) * zone;
-          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0053, -scrollB * 0.0715) * zone;
+          float scroll = fract(t * 0.42);
+          float scrollB = fract(t * 0.42 + 0.5);
+          vec2 flowA = distort + vec2((n3 - 0.5) * 0.0051, -scroll * 0.09) * zone;
+          vec2 flowB = distort + vec2((n1 - 0.5) * 0.0039, -scrollB * 0.09) * zone;
           float blend = abs(scroll * 2.0 - 1.0);
           vec2 sampleUv = clamp(mix(uv + flowA, uv + flowB, blend), vec2(0.01, 0.0), vec2(0.99, 1.0));
 
@@ -618,7 +616,7 @@
         `
       );
     };
-    mat.customProgramCacheKey = () => 'island-waterfall-pool-v5';
+    mat.customProgramCacheKey = () => 'island-waterfall-pool-v7';
     return mat;
   }
 
@@ -840,7 +838,7 @@
 
   /**
    * Arc droplets: spawn at the bottom of waterfall-01, fly a short parabola,
-   * and land on waterfall-02. Uses real vx/vy + gravity so motion is obvious.
+   * and land on waterfall-02. Fewer, softer particles for a natural misty splash.
    */
   function createArcSplash(start, end, count) {
     const positions = new Float32Array(count * 3);
@@ -848,26 +846,26 @@
     const particles = [];
 
     function seed(p, randomizeAge) {
-      p.x0 = start.x + (Math.random() - 0.5) * 0.028;
-      p.y0 = start.y + (Math.random() - 0.5) * 0.01;
-      // Aim toward the spray sheet with a sideways fan.
-      const tx = end.x + (Math.random() - 0.5) * 0.08 - p.x0;
-      const ty = end.y + (Math.random() - 0.5) * 0.03 - p.y0;
-      const flight = 0.55 + Math.random() * 0.45; // seconds
-      // Initial upward kick so the path reads as a parabola, then gravity pulls down.
-      p.vx = tx / flight + (Math.random() - 0.5) * 0.04;
-      p.vy = Math.max(0.02, ty / flight) + 0.06 + Math.random() * 0.08;
-      p.g = 0.28 + Math.random() * 0.18;
+      p.x0 = start.x + (Math.random() - 0.5) * 0.034;
+      p.y0 = start.y + (Math.random() - 0.5) * 0.014;
+      const tx = end.x + (Math.random() - 0.5) * 0.1 - p.x0;
+      const ty = end.y + (Math.random() - 0.5) * 0.04 - p.y0;
+      // Longer, uneven flights so droplets don't pulse in sync.
+      const flight = 0.7 + Math.random() * 0.85;
+      p.vx = tx / flight + (Math.random() - 0.5) * 0.055;
+      p.vy = Math.max(0.015, ty / flight) + 0.035 + Math.random() * 0.07;
+      p.g = 0.22 + Math.random() * 0.2;
       p.age = randomizeAge ? Math.random() * flight : 0;
       p.life = flight;
       p.x = p.x0;
       p.y = p.y0;
+      // Soft size/opacity variance via fade ceiling.
+      p.peak = 0.45 + Math.random() * 0.4;
     }
 
     for (let i = 0; i < count; i++) {
-      const p = { x: 0, y: 0, x0: 0, y0: 0, vx: 0, vy: 0, g: 0, age: 0, life: 1 };
+      const p = { x: 0, y: 0, x0: 0, y0: 0, vx: 0, vy: 0, g: 0, age: 0, life: 1, peak: 0.7 };
       seed(p, true);
-      // Advance once so randomized particles aren't all stacked at spawn.
       p.x = p.x0 + p.vx * p.age;
       p.y = p.y0 + p.vy * p.age - 0.5 * p.g * p.age * p.age;
       particles.push(p);
@@ -875,14 +873,14 @@
       positions[i * 3 + 1] = p.y;
       positions[i * 3 + 2] = start.z;
       const u = p.age / p.life;
-      fades[i] = u < 0.1 ? u / 0.1 : u > 0.7 ? Math.max(0, 1 - (u - 0.7) / 0.3) : 0.85;
+      const envelope = u < 0.12 ? u / 0.12 : u > 0.65 ? Math.max(0, 1 - (u - 0.65) / 0.35) : 1;
+      fades[i] = envelope * p.peak;
     }
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geo.setAttribute('aFade', new THREE.BufferAttribute(fades, 1));
-    // ~50% of previous brightness.
-    const pts = new THREE.Points(geo, makeSoftPointsMaterial(5, 0.3));
+    const pts = new THREE.Points(geo, makeSoftPointsMaterial(4.5, 0.22));
     pts.renderOrder = 1202;
     pts.userData = { particles, start, end, seed };
     return pts;
@@ -1101,7 +1099,7 @@
         waveMats.push(mat);
         wakeMat = mat;
       } else if (p.id === 'waterfall') {
-        mat = makeWaterfallMaterial(texMap[p.file], { speed: 0.9 });
+        mat = makeWaterfallMaterial(texMap[p.file], { speed: 1.45 });
         waterfallMats.push(mat);
       } else if (p.id === 'waterfallSpray') {
         // Beach-like pool wash where the fall lands (quieter than ocean shore).
@@ -1269,12 +1267,12 @@
         spray.position.y - spray.geometry.parameters.height * 0.35,
         frontZ
       );
-      splashPoints = createArcSplash(start, end, reducedMotion ? 10 : 52);
+      splashPoints = createArcSplash(start, end, reducedMotion ? 5 : 26);
       artRoot.add(splashPoints);
 
       mistPoints = createMist(
         new THREE.Vector3(end.x, end.y - 0.01, frontZ),
-        reducedMotion ? 6 : 22
+        reducedMotion ? 4 : 14
       );
       artRoot.add(mistPoints);
     } else if (propMeshes.waterfallSpray) {
@@ -1616,7 +1614,8 @@
         pos.array[i * 3] = p.x;
         pos.array[i * 3 + 1] = p.y;
         pos.array[i * 3 + 2] = z;
-        fade.array[i] = u < 0.1 ? u / 0.1 : u > 0.7 ? Math.max(0, 1 - (u - 0.7) / 0.3) : 0.85;
+        const envelope = u < 0.12 ? u / 0.12 : u > 0.65 ? Math.max(0, 1 - (u - 0.65) / 0.35) : 1;
+        fade.array[i] = envelope * (p.peak == null ? 0.7 : p.peak);
         if (p.age >= p.life || p.y < splashPoints.userData.end.y - 0.04) {
           seed(p, false);
           p.x = p.x0;
