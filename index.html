@@ -594,8 +594,7 @@ body.panel-open .stage{
 .panel .cta-btn,
 .panel .chip,
 .panel .team-name,
-.panel .team-role,
-.panel .portfolio-card .name{
+.panel .team-role{
   font-family:'Anton', Impact, 'Arial Narrow', sans-serif;
   font-weight:400;
   letter-spacing:.04em;
@@ -961,38 +960,6 @@ body.panel-open .stage{
   transition:transform .15s ease;
 }
 .cta-btn:hover{ transform:translateY(-2px); }
-
-.portfolio-row{
-  display:flex; gap:10px; overflow-x:auto; padding-bottom:6px;
-}
-.portfolio-card{
-  width:120px;
-  min-width:120px;
-  background:#fff;
-  border:1px solid #EFDFB8;
-  border-radius:12px;
-  padding:10px;
-  text-align:center;
-  flex-shrink:0;
-  box-sizing:border-box;
-}
-.portfolio-card .thumb{
-  display:block;
-  width:100%;
-  height:auto;
-  aspect-ratio:1 / 1;
-  object-fit:contain;
-  object-position:center;
-  border-radius:8px;
-  background:#0E2F42;
-}
-.portfolio-card .ic{ font-size:24px;}
-.portfolio-card .name{
-  font-size:11.5px;
-  font-weight:800;
-  margin-top:8px;
-  line-height:1.2;
-}
 
 /* Mobile-only chrome — class set by JS (real phones disagree with CSS orientation). */
 html.layout-portrait{
@@ -1439,20 +1406,20 @@ const content = {
     lead: "A growing treasury of titles shipped with operators and partners across real-money and casual markets.",
     body: `
       <div class="section-label">Selected Work</div>
-      <div class="portfolio-row">
-        <div class="portfolio-card">
+      <div class="game-grid">
+        <div class="game-card">
           <img class="thumb" src="assets/thumbnail/bandith_s%20Bounty.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Bandit's Bounty</div>
         </div>
-        <div class="portfolio-card">
+        <div class="game-card">
           <img class="thumb" src="assets/thumbnail/secrets%20of%20the%20lamp.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Secrets of the Lamp</div>
         </div>
-        <div class="portfolio-card">
+        <div class="game-card">
           <img class="thumb" src="assets/thumbnail/Pirates%20fortune.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Pirate's Fortune</div>
         </div>
-        <div class="portfolio-card">
+        <div class="game-card">
           <img class="thumb" src="assets/thumbnail/crash%20game.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Crash Gold</div>
         </div>
