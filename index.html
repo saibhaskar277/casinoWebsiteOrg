@@ -35,6 +35,7 @@ window.__ASSET_BUST__ = (function () {
   --cream:#FFF7E6;
   --panel-bg:#FFFBF0;
   --shadow: 0 12px 30px rgba(14,47,66,.25);
+  --title-img: url('assets/ui/Title%20with%20board.png');
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 html,body{
@@ -921,18 +922,55 @@ body.panel-open .stage{
 .portfolio-card .ic{ font-size:24px;}
 .portfolio-card .name{ font-size:11.5px; font-weight:800; margin-top:6px;}
 
-@media(max-width:760px){
+/* Mobile-only chrome — gated to portrait so landscape (any width) keeps the desktop layout. */
+@media (max-width:760px) and (orientation:portrait){
   body{ --panel-width:100vw; }
   .overlay{
     background:rgba(14,47,66,.2);
   }
 
-  /* Keep hero board readable and centered like desktop. */
+  /*
+    Portrait: keep the board at full mobile width, but stretch ONLY the top ~20%
+    of the title art (the hanging ropes) downward so the wood sign sits below
+    the company logo while the ropes still start from the top of the screen.
+  */
   .hero-copy{
+    top:0 !important;
     left:50% !important;
     width:min(var(--title-width, 78%), 88vw) !important;
     max-width:88vw;
     transform:translateX(-50%) !important;
+    /* Extra height = stretched rope band above the board */
+    aspect-ratio:755 / 410;
+    background-image:none !important;
+    background:transparent !important;
+    overflow:visible;
+  }
+  .hero-copy::before,
+  .hero-copy::after{
+    content:'';
+    position:absolute;
+    left:0;
+    right:0;
+    pointer-events:none;
+    background-image:var(--title-img, url('assets/ui/Title%20with%20board.png'));
+    background-repeat:no-repeat;
+  }
+  /* Top ~20% of the PNG, stretched to fill the rope band (~32% of box height). */
+  .hero-copy::before{
+    top:0;
+    height:32%;
+    background-size:100% 500%;
+    background-position:center top;
+    z-index:0;
+  }
+  /* Bottom ~80% of the PNG (wood board + text) sits under the stretched ropes. */
+  .hero-copy::after{
+    top:32%;
+    bottom:0;
+    background-size:100% 125%;
+    background-position:center bottom;
+    z-index:0;
   }
   .hero-eyebrow{
     white-space:normal;
@@ -1350,7 +1388,9 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 
     const top = cfg.topbar || {};
     const mob = cfg.mobile || {};
-    const isMobile = window.matchMedia(`(max-width: ${mob.maxWidthPx || 760}px)`).matches;
+    // Orientation is the sole signal — must match island-scene.js's isMobileViewport()
+    // so a landscape phone (even a narrow one) always gets the desktop chrome, scaled down.
+    const isMobile = window.innerHeight > window.innerWidth;
 
     root.style.setProperty('--topbar-pad-y', `${isMobile ? (mob.topbarPadY ?? 10) : (top.paddingY ?? 18)}px`);
     root.style.setProperty('--topbar-pad-x', `${isMobile ? (mob.topbarPadX ?? 12) : (top.paddingX ?? 26)}px`);
@@ -1374,7 +1414,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     const padTopW = (t.paddingTopPct ?? 14) * titleHOverW;
     const padBottomW = (t.paddingBottomPct ?? 16) * titleHOverW;
     const titleWidthPct = isMobile
-      ? (mob.titleWidthPct == null ? 88 : Number(mob.titleWidthPct))
+      ? (mob.titleWidthPct == null ? 78 : Number(mob.titleWidthPct))
       : (tw / artW) * 100;
     // Mobile: pin the board dead-center (desktop art cx can look off on portrait).
     const titleLeftPct = isMobile ? 50 : (cx / artW) * 100;
@@ -1390,7 +1430,9 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
       const titleEl = document.querySelector('.hero-copy');
       if (titleEl) {
         const titleUrl = t.file.startsWith('assets/') ? t.file : `assets/ui/${t.file}`;
-        titleEl.style.backgroundImage = `url('${titleUrl.replace(/ /g, '%20')}')`;
+        const escaped = titleUrl.replace(/ /g, '%20');
+        titleEl.style.backgroundImage = `url('${escaped}')`;
+        root.style.setProperty('--title-img', `url('${escaped}')`);
       }
     }
     const eyebrow = t.eyebrow || {};

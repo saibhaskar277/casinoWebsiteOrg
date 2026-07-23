@@ -43,13 +43,14 @@
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
 
-  /** Portrait phones get the dedicated 1080x1920 scene. */
-  const MOBILE_MEDIA = '(max-width: 760px)';
+  /**
+   * Portrait viewports get the dedicated 1080x1920 scene; landscape always
+   * uses the desktop 1920x960 scene (scaled to fit), regardless of width —
+   * narrow-width landscape phones (e.g. small phones rotated) must still
+   * render the PC layout, just smaller.
+   */
   function isMobileViewport() {
-    return (
-      window.matchMedia(MOBILE_MEDIA).matches ||
-      window.innerHeight > window.innerWidth
-    );
+    return window.innerHeight > window.innerWidth;
   }
   let usingMobileScene = false;
 
