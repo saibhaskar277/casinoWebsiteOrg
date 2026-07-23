@@ -69,6 +69,7 @@ window.__ASSET_BUST__ = (function () {
   --panel-bg:#FFFBF0;
   --shadow: 0 12px 30px rgba(14,47,66,.25);
   --title-img: url('assets/ui/Title%20with%20board.png');
+  --panel-width:clamp(480px, 48vw, 720px);
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 html,body{
@@ -83,7 +84,6 @@ body{
   color:var(--ink);
   overflow:hidden;
   background:#6ec8ff;
-  --panel-width:clamp(480px, 48vw, 720px);
 }
 
 /* ---------- BOOT LOADER ---------- */
@@ -481,18 +481,43 @@ body.panel-open .stage{
   position:fixed;
   top:0; right:0;
   width:var(--panel-width);
-  height:100vh;
+  max-width:100%;
+  height:100%;
+  height:100dvh;
+  height:var(--stage-h, 100dvh);
+  max-height:100dvh;
+  max-height:var(--stage-h, 100dvh);
   background:var(--panel-bg);
   box-shadow:-14px 0 40px rgba(14,47,66,.35);
   transform:translateX(100%);
   transition:transform .38s cubic-bezier(.22,.9,.32,1);
   z-index:90;
+  overflow-x:hidden;
   overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
   padding:26px 24px 60px;
+  padding-top:calc(26px + env(safe-area-inset-top, 0px));
+  padding-right:calc(24px + env(safe-area-inset-right, 0px));
+  padding-bottom:calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-left:calc(24px + env(safe-area-inset-left, 0px));
+  box-sizing:border-box;
 }
 .panel.open{ transform:translateX(0); }
 .panel::-webkit-scrollbar{width:8px;}
 .panel::-webkit-scrollbar-thumb{background:var(--sand-dark); border-radius:8px;}
+.panel img,
+.panel .casino-hero,
+.panel .game-grid,
+.panel .casino-cat-row,
+.panel .stat-grid,
+.panel .chip-grid,
+.panel .chip-row{
+  max-width:100%;
+}
+.panel .casino-hero{
+  width:100%;
+}
 
 .panel-close{
   position:absolute;
@@ -958,7 +983,63 @@ body.panel-open .stage{
 
 /* Mobile-only chrome — class set by JS (real phones disagree with CSS orientation). */
 html.layout-portrait{
-  --panel-width:100vw;
+  --panel-width:100%;
+}
+html.layout-portrait .panel{
+  width:100%;
+  max-width:100%;
+  left:0;
+  right:0;
+  border-radius:0;
+  padding:20px 16px 48px;
+  padding-top:calc(20px + env(safe-area-inset-top, 0px));
+  padding-right:calc(16px + env(safe-area-inset-right, 0px));
+  padding-bottom:calc(48px + env(safe-area-inset-bottom, 0px));
+  padding-left:calc(16px + env(safe-area-inset-left, 0px));
+}
+html.layout-portrait .panel-close{
+  top:calc(12px + env(safe-area-inset-top, 0px));
+  right:calc(12px + env(safe-area-inset-right, 0px));
+}
+html.layout-portrait .panel h2{
+  font-size:clamp(22px, 6vw, 28px);
+  padding-right:40px;
+}
+html.layout-portrait .game-grid,
+html.layout-portrait .casino-cat-row,
+html.layout-portrait .stat-grid{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+html.layout-portrait .chip-grid{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+/* Phone landscape: side panel min-width was blowing past the screen. */
+html.layout-landscape{
+  --panel-width:min(100%, 520px);
+}
+@media (max-height: 520px), (max-width: 900px){
+  html.layout-landscape{
+    --panel-width:100%;
+  }
+  html.layout-landscape .panel{
+    width:100%;
+    max-width:100%;
+    left:0;
+    right:0;
+    padding:14px 14px 36px;
+    padding-top:calc(14px + env(safe-area-inset-top, 0px));
+    padding-bottom:calc(36px + env(safe-area-inset-bottom, 0px));
+  }
+  html.layout-landscape .panel-close{
+    top:calc(10px + env(safe-area-inset-top, 0px));
+    right:calc(10px + env(safe-area-inset-right, 0px));
+  }
+  html.layout-landscape .game-grid,
+  html.layout-landscape .casino-cat-row,
+  html.layout-landscape .stat-grid,
+  html.layout-landscape .chip-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
 }
 html.layout-portrait .overlay{
   background:rgba(14,47,66,.2);
