@@ -124,7 +124,7 @@
     "flagVillage": {
       "file": "flag-village.png",
       "x": 570,
-      "y": 765,
+      "y": 755,
       "w": 43,
       "h": 25,
       "scale": 1.1
@@ -132,7 +132,7 @@
     "ship": {
       "file": "ship.png",
       "x": 20,
-      "y": 595,
+      "y": 610,
       "w": 300,
       "h": 234,
       "scale": 1.1
@@ -155,8 +155,8 @@
     },
     "flagFort": {
       "file": "flag-fort.png",
-      "x": 770,
-      "y": 830,
+      "x": 783,
+      "y": 810,
       "w": 57,
       "h": 33,
       "scale": 1.1
