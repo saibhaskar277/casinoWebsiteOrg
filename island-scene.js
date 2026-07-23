@@ -45,16 +45,36 @@
 
   /**
    * Portrait viewports get the dedicated 1080x1920 scene; landscape always
-   * uses the desktop 1920x960 scene (scaled to fit), regardless of width —
-   * narrow-width landscape phones (e.g. small phones rotated) must still
-   * render the PC layout, just smaller.
+   * uses the desktop 1920x960 scene (uniformly scaled), regardless of width.
+   * Prefer visualViewport so mobile browser chrome doesn't flip the decision.
    */
+  function viewportSize() {
+    const vv = window.visualViewport;
+    if (vv && vv.width > 0 && vv.height > 0) {
+      return { w: vv.width, h: vv.height };
+    }
+    return { w: window.innerWidth, h: window.innerHeight };
+  }
+
   function isMobileViewport() {
-    return window.innerHeight > window.innerWidth;
+    const { w, h } = viewportSize();
+    if (Math.abs(w - h) < 12) {
+      return window.matchMedia('(orientation: portrait)').matches;
+    }
+    return h > w;
+  }
+
+  /** Keep CSS + JS on the same orientation signal (media queries disagree on some phones). */
+  function syncLayoutOrientationClass() {
+    const portrait = isMobileViewport();
+    document.documentElement.classList.toggle('layout-portrait', portrait);
+    document.documentElement.classList.toggle('layout-landscape', !portrait);
+    return portrait;
   }
   let usingMobileScene = false;
 
   async function loadConfigs() {
+    syncLayoutOrientationClass();
     usingMobileScene = isMobileViewport();
     // Mobile: try the portrait layout, fall back to the desktop scene if missing.
     let sceneRes = null;
@@ -131,7 +151,7 @@
   }
 
   let renderer, scene, camera, clock;
-  let artRoot, view = { scaleX: 1, scaleY: 1, ox: 0, oy: 0 };
+  let artRoot, view = { scaleX: 1, scaleY: 1, ox: 0, oy: 0, stageW: 1, stageH: 1 };
   let waterMat, wakeMat, shipMesh, shipShadow, mountainMesh;
   let cloudMeshes = [];
   let waveMats = [];
@@ -162,21 +182,16 @@
   ]);
 
   function syncLandmarkAspect() {
-    const stage = document.getElementById('stage');
-    if (!stage) return;
-    const vw = Math.max(1, stage.clientWidth);
-    const vh = Math.max(1, stage.clientHeight);
-    // Undo non-uniform stretch for these props only: keep sprite pixel aspect = PNG aspect.
-    const sx = (ART_W / ART_H) * (vh / vw);
+    // Uniform cover keeps PNG aspect — only apply landmark grow, no stretch undo.
     for (let i = 0; i < landmarkMeshes.length; i++) {
       const mesh = landmarkMeshes[i];
       const grow = mesh.userData.landmarkGrow || 1;
-      mesh.scale.set(sx * grow, grow, 1);
+      mesh.scale.set(grow, grow, 1);
     }
     if (shipShadow) {
       const grow = shipShadow.userData.landmarkGrow || 1;
-      shipShadow.scale.set(sx * grow, grow, 1);
-      shipShadow.userData.baseScaleX = sx * grow;
+      shipShadow.scale.set(grow, grow, 1);
+      shipShadow.userData.baseScaleX = grow;
     }
   }
 
@@ -908,13 +923,19 @@
   function computeCover() {
     const stage = document.getElementById('stage');
     const rect = stage ? stage.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight, left: 0, top: 0 };
-    const vw = rect.width;
-    const vh = rect.height;
-    // Stretch-to-fill: the whole illustration maps to the whole stage (no crop, no gaps).
-    view.scaleX = (vw / ART_W) * VIEW_ZOOM;
-    view.scaleY = (vh / ART_H) * VIEW_ZOOM;
-    view.ox = rect.left;
-    view.oy = rect.top;
+    const vw = Math.max(1, rect.width);
+    const vh = Math.max(1, rect.height);
+    // Uniform COVER — same aspect as PC art, fill the stage (crop overflow).
+    // Independent X/Y stretch was fine for 2:1 monitors, but real phone
+    // landscape (browser chrome) is much wider and looked squashed vs. the
+    // fixed iframe sizes in mobile-dev.html.
+    const scale = Math.max(vw / ART_W, vh / ART_H) * VIEW_ZOOM;
+    view.scaleX = scale;
+    view.scaleY = scale;
+    view.ox = rect.left + (vw - ART_W * scale) / 2;
+    view.oy = rect.top + (vh - ART_H * scale) / 2;
+    view.stageW = vw;
+    view.stageH = vh;
     return view;
   }
 
@@ -933,9 +954,11 @@
    */
   function artToStage(ax, ay) {
     computeCover();
+    const offX = (view.stageW - ART_W * view.scaleX) / 2;
+    const offY = (view.stageH - ART_H * view.scaleY) / 2;
     return {
-      left: ax * view.scaleX,
-      top: ay * view.scaleY,
+      left: offX + ax * view.scaleX,
+      top: offY + ay * view.scaleY,
     };
   }
 
@@ -1448,6 +1471,7 @@
 
   function resize() {
     if (!renderer) return;
+    syncLayoutOrientationClass();
     const stage = document.getElementById('stage');
     const w = Math.max(1, stage.clientWidth);
     const h = Math.max(1, stage.clientHeight);
@@ -1455,11 +1479,25 @@
     renderer.setPixelRatio(dpr);
     renderer.setSize(w, h, false);
 
-    // Stretch-to-fill: art plane (x,y in [-1,1]) maps to the whole stage.
-    camera.left = -1;
-    camera.right = 1;
-    camera.top = 1;
-    camera.bottom = -1;
+    // Uniform COVER camera: art stays [-1,1]²; zoom the ortho frustum so the
+    // shorter stage axis maps to the full art (extra axis is cropped).
+    const artAspect = ART_W / ART_H;
+    const viewAspect = w / h;
+    if (viewAspect > artAspect) {
+      // Stage wider than art → crop top/bottom
+      const halfH = artAspect / viewAspect;
+      camera.left = -1;
+      camera.right = 1;
+      camera.top = halfH;
+      camera.bottom = -halfH;
+    } else {
+      // Stage taller than art → crop left/right
+      const halfW = viewAspect / artAspect;
+      camera.left = -halfW;
+      camera.right = halfW;
+      camera.top = 1;
+      camera.bottom = -1;
+    }
     camera.updateProjectionMatrix();
     syncLandmarkAspect();
   }

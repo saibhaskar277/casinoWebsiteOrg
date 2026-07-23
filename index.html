@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="site-rev" content="__DEPLOY_REV__">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -18,6 +18,28 @@ window.__ASSET_BUST__ = (function () {
     return String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8);
   }
   return rev;
+})();
+/* Orientation + visible height before paint — must match island-scene.js. */
+(function syncOrientEarly() {
+  function apply() {
+    const vv = window.visualViewport;
+    const w = vv && vv.width > 0 ? vv.width : window.innerWidth;
+    const h = vv && vv.height > 0 ? vv.height : window.innerHeight;
+    const portrait = Math.abs(w - h) < 12
+      ? window.matchMedia('(orientation: portrait)').matches
+      : h > w;
+    document.documentElement.classList.toggle('layout-portrait', portrait);
+    document.documentElement.classList.toggle('layout-landscape', !portrait);
+    const stageH = vv && vv.height > 0 ? vv.height : h;
+    document.documentElement.style.setProperty('--stage-h', `${Math.round(stageH)}px`);
+  }
+  apply();
+  window.addEventListener('resize', apply);
+  window.addEventListener('orientationchange', () => setTimeout(apply, 50));
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', apply);
+    window.visualViewport.addEventListener('scroll', apply);
+  }
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,10 +62,8 @@ window.__ASSET_BUST__ = (function () {
 *{box-sizing:border-box; margin:0; padding:0;}
 html,body{
   height:100%;
-  /* Visible browser area (not large-viewport/lvh) so the full scene fits
-     on screen — lvh was taller than the chrome-visible area and clipped the bottom. */
-  height:100vh;
-  height:100dvh;
+  /* Prefer visualViewport-synced --stage-h on real phones (browser chrome). */
+  height:var(--stage-h, 100dvh);
   overflow:hidden;
   position:relative;
 }
@@ -135,8 +155,8 @@ body.is-ready .stage{
 .stage{
   position:relative;
   width:100vw;
-  height:100vh;
-  height:100dvh;
+  width:100dvw;
+  height:var(--stage-h, 100dvh);
   overflow:hidden;
   background:linear-gradient(180deg, #6ec8ff 0%, #b8e8ff 45%, #ffe49e 62%, #17adc2 68%, #0c7f98 100%);
 }
@@ -174,6 +194,9 @@ body.is-ready .stage{
   align-items:center;
   justify-content:space-between;
   padding:var(--topbar-pad-y, 18px) var(--topbar-pad-x, 26px);
+  padding-top:calc(var(--topbar-pad-y, 18px) + env(safe-area-inset-top, 0px));
+  padding-left:calc(var(--topbar-pad-x, 26px) + env(safe-area-inset-left, 0px));
+  padding-right:calc(var(--topbar-pad-x, 26px) + env(safe-area-inset-right, 0px));
   pointer-events:none;
 }
 .logo{
@@ -412,7 +435,7 @@ body.is-ready .stage{
 
 .footer-tag{
   position:absolute;
-  bottom:var(--footer-bottom, 20px); left:50%; transform:translateX(-50%);
+  bottom:calc(var(--footer-bottom, 20px) + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%);
   z-index:22;
   text-align:center;
   color:var(--cream);
@@ -439,8 +462,8 @@ body.is-ready .stage{
 
 body.panel-open .stage{
   width:100vw !important;
-  height:100vh !important;
-  height:100dvh !important;
+  width:100dvw !important;
+  height:var(--stage-h, 100dvh) !important;
 }
 
 .panel{
@@ -922,161 +945,167 @@ body.panel-open .stage{
 .portfolio-card .ic{ font-size:24px;}
 .portfolio-card .name{ font-size:11.5px; font-weight:800; margin-top:6px;}
 
-/* Mobile-only chrome — gated to portrait so landscape (any width) keeps the desktop layout. */
-@media (max-width:760px) and (orientation:portrait){
-  body{ --panel-width:100vw; }
-  .overlay{
-    background:rgba(14,47,66,.2);
-  }
+/* Mobile-only chrome — class set by JS (real phones disagree with CSS orientation). */
+html.layout-portrait{
+  --panel-width:100vw;
+}
+html.layout-portrait .overlay{
+  background:rgba(14,47,66,.2);
+}
 
-  /*
-    Portrait: keep the board at full mobile width, but stretch ONLY the top ~20%
-    of the title art (the hanging ropes) downward so the wood sign sits below
-    the company logo while the ropes still start from the top of the screen.
-  */
-  .hero-copy{
-    top:0 !important;
-    left:50% !important;
-    width:min(var(--title-width, 78%), 88vw) !important;
-    max-width:88vw;
-    transform:translateX(-50%) !important;
-    /* Extra height = stretched rope band above the board */
-    aspect-ratio:755 / 410;
-    background-image:none !important;
-    background:transparent !important;
-    overflow:visible;
-  }
-  .hero-copy::before,
-  .hero-copy::after{
-    content:'';
-    position:absolute;
-    left:0;
-    right:0;
-    pointer-events:none;
-    background-image:var(--title-img, url('assets/ui/Title%20with%20board.png'));
-    background-repeat:no-repeat;
-  }
-  /* Top ~20% of the PNG, stretched to fill the rope band (~32% of box height). */
-  .hero-copy::before{
-    top:0;
-    height:32%;
-    background-size:100% 500%;
-    background-position:center top;
-    z-index:0;
-  }
-  /* Bottom ~80% of the PNG (wood board + text) sits under the stretched ropes. */
-  .hero-copy::after{
-    top:32%;
-    bottom:0;
-    background-size:100% 125%;
-    background-position:center bottom;
-    z-index:0;
-  }
-  .hero-eyebrow{
-    white-space:normal;
-    letter-spacing:0.3px;
-    text-align:center;
-    transform:none !important;
-    font-size:clamp(6.5px, 2vw, var(--title-eyebrow-max, 7.8px));
-    max-width:92%;
-  }
-  .hero-title{
-    transform:none !important;
-    text-align:center;
-    font-size:clamp(12px, 3.8vw, var(--title-headline-max, 14.4px));
-    line-height:1.08;
-  }
+/*
+  Portrait: keep the board at full mobile width, but stretch ONLY the top ~20%
+  of the title art (the hanging ropes) downward so the wood sign sits below
+  the company logo while the ropes still start from the top of the screen.
+*/
+html.layout-portrait .hero-copy{
+  top:0 !important;
+  left:50% !important;
+  width:min(var(--title-width, 78%), 88vw) !important;
+  max-width:88vw;
+  transform:translateX(-50%) !important;
+  /* Extra height = stretched rope band above the board */
+  aspect-ratio:755 / 410;
+  background-image:none !important;
+  background:transparent !important;
+  overflow:visible;
+}
+html.layout-portrait .hero-copy::before,
+html.layout-portrait .hero-copy::after{
+  content:'';
+  position:absolute;
+  left:0;
+  right:0;
+  pointer-events:none;
+  background-image:var(--title-img, url('assets/ui/Title%20with%20board.png'));
+  background-repeat:no-repeat;
+}
+/* Top ~20% of the PNG, stretched to fill the rope band (~32% of box height). */
+html.layout-portrait .hero-copy::before{
+  top:0;
+  height:32%;
+  background-size:100% 500%;
+  background-position:center top;
+  z-index:0;
+}
+/* Bottom ~80% of the PNG (wood board + text) sits under the stretched ropes. */
+html.layout-portrait .hero-copy::after{
+  top:32%;
+  bottom:0;
+  background-size:100% 125%;
+  background-position:center bottom;
+  z-index:0;
+}
+html.layout-portrait .hero-eyebrow{
+  white-space:normal;
+  letter-spacing:0.3px;
+  text-align:center;
+  transform:none !important;
+  font-size:clamp(6.5px, 2vw, var(--title-eyebrow-max, 7.8px));
+  max-width:92%;
+}
+html.layout-portrait .hero-title{
+  transform:none !important;
+  text-align:center;
+  font-size:clamp(12px, 3.8vw, var(--title-headline-max, 14.4px));
+  line-height:1.08;
+}
 
-  /* Compact chrome so art + hotspots stay visible. */
-  .topbar{
-    padding:var(--topbar-pad-y, 8px) var(--topbar-pad-x, 10px);
-  }
-  .footer-tag{
-    font-size:var(--footer-font, 7.6px);
-    bottom:var(--footer-bottom, 8px);
-    width:min(var(--footer-max-px, 560px), var(--footer-max-vw, 92vw));
-  }
+/* Compact chrome so art + hotspots stay visible. */
+html.layout-portrait .topbar{
+  padding:var(--topbar-pad-y, 8px) var(--topbar-pad-x, 10px);
+  padding-top:calc(var(--topbar-pad-y, 8px) + env(safe-area-inset-top, 0px));
+  padding-left:calc(var(--topbar-pad-x, 10px) + env(safe-area-inset-left, 0px));
+  padding-right:calc(var(--topbar-pad-x, 10px) + env(safe-area-inset-right, 0px));
+}
+html.layout-portrait .footer-tag{
+  font-size:var(--footer-font, 7.6px);
+  bottom:calc(var(--footer-bottom, 8px) + env(safe-area-inset-bottom, 0px));
+  width:min(var(--footer-max-px, 560px), var(--footer-max-vw, 92vw));
+}
 
-  /* Match --isle-size to the mobile medallion width below (+15% box scale total). */
-  .hotspot{
-    --isle-size:clamp(32.5px, 8.3vw, 45px);
-  }
+/* Match --isle-size to the mobile medallion width below (+15% box scale total). */
+html.layout-portrait .hotspot{
+  --isle-size:clamp(32.5px, 8.3vw, 45px);
+}
 
-  /*
-    Mobile: same overlap as PC — circle center sits inside the wood near the
-    connecting corner (not on the outer rim). Compensate text-board.png
-    transparent padding so the painted vertex lands in the circle middle.
-  */
-  .hotspot .tag{
-    top:50%;
-    left:50%;
-    /* Right-opening (01, 04): pad + small inset so painted corner hits circle center */
-    transform:translate(
-      calc(-1 * var(--tb-pad-x-pct) - 5%),
-      calc(-1 * var(--tb-pad-y-pct))
-    );
-  }
+/*
+  Mobile: same overlap as PC — circle center sits inside the wood near the
+  connecting corner (not on the outer rim). Compensate text-board.png
+  transparent padding so the painted vertex lands in the circle middle.
+*/
+html.layout-portrait .hotspot .tag{
+  top:50%;
+  left:50%;
+  /* Right-opening (01, 04): pad + small inset so painted corner hits circle center */
+  transform:translate(
+    calc(-1 * var(--tb-pad-x-pct) - 5%),
+    calc(-1 * var(--tb-pad-y-pct))
+  );
+}
 
-  /* Left-opening (02, 03, 05): same nudge, mirrored on the top-right vertex. */
-  .hotspot[data-spot="2"] .tag,
-  .hotspot[data-spot="3"] .tag,
-  .hotspot[data-spot="5"] .tag{
-    left:50%;
-    right:auto;
-    top:50%;
-    transform:translate(
-      calc(-100% + var(--tb-pad-r-pct) + 5%),
-      calc(-1 * var(--tb-pad-y-pct))
-    );
-    padding:var(--tb-pad-top, 16%) var(--tb-pad-left, 26%) var(--tb-pad-bottom, 16%) var(--tb-pad-x, 10%);
-  }
+/* Left-opening (02, 03, 05): same nudge, mirrored on the top-right vertex. */
+html.layout-portrait .hotspot[data-spot="2"] .tag,
+html.layout-portrait .hotspot[data-spot="3"] .tag,
+html.layout-portrait .hotspot[data-spot="5"] .tag{
+  left:50%;
+  right:auto;
+  top:50%;
+  transform:translate(
+    calc(-100% + var(--tb-pad-r-pct) + 5%),
+    calc(-1 * var(--tb-pad-y-pct))
+  );
+  padding:var(--tb-pad-top, 16%) var(--tb-pad-left, 26%) var(--tb-pad-bottom, 16%) var(--tb-pad-x, 10%);
+}
 
-  /* Section boards: number + text box images. */
-  .hotspot .isle{
-    width:var(--isle-size) !important;
-  }
-  .hotspot .tag{
-    width:clamp(83px, 22vw, 111px) !important;
-    aspect-ratio:520 / 300 !important;
-    font-size:clamp(8.8px, 2.03vw, 10.9px) !important;
-    line-height:1.12 !important;
-    font-weight:800;
-    letter-spacing:-0.15px !important;
-    white-space:normal;
-    overflow:hidden !important;
-    word-break:break-word;
-    overflow-wrap:anywhere;
-    hyphens:auto;
-    padding:16% 8% 16% 24% !important;
-    box-sizing:border-box;
-    display:flex !important;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-  }
-  .hotspot[data-spot="2"] .tag,
-  .hotspot[data-spot="3"] .tag,
-  .hotspot[data-spot="5"] .tag{
-    padding:16% 24% 16% 8% !important;
-  }
-  /* 01 / 05: long labels — narrow for 2 lines, same larger type */
-  .hotspot[data-spot="1"] .tag,
-  .hotspot[data-spot="5"] .tag{
-    width:clamp(90px, 23.7vw, 120px) !important;
-    font-size:clamp(8.5px, 1.94vw, 10.6px) !important;
-    padding:18% 9% 18% 26% !important;
-  }
-  .hotspot[data-spot="5"] .tag{
-    padding:18% 26% 18% 9% !important;
-  }
-  .hotspot .badge{
-    font-size:clamp(6.6px, 1.54vw, 8.3px) !important;
-  }
+/* Section boards: number + text box images. */
+html.layout-portrait .hotspot .isle{
+  width:var(--isle-size) !important;
+}
+html.layout-portrait .hotspot .tag{
+  width:clamp(83px, 22vw, 111px) !important;
+  aspect-ratio:520 / 300 !important;
+  font-size:clamp(8.8px, 2.03vw, 10.9px) !important;
+  line-height:1.12 !important;
+  font-weight:800;
+  letter-spacing:-0.15px !important;
+  white-space:normal;
+  overflow:hidden !important;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  hyphens:auto;
+  padding:16% 8% 16% 24% !important;
+  box-sizing:border-box;
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+html.layout-portrait .hotspot[data-spot="2"] .tag,
+html.layout-portrait .hotspot[data-spot="3"] .tag,
+html.layout-portrait .hotspot[data-spot="5"] .tag{
+  padding:16% 24% 16% 8% !important;
+}
+/* 01 / 05: long labels — narrow for 2 lines, same larger type */
+html.layout-portrait .hotspot[data-spot="1"] .tag,
+html.layout-portrait .hotspot[data-spot="5"] .tag{
+  width:clamp(90px, 23.7vw, 120px) !important;
+  font-size:clamp(8.5px, 1.94vw, 10.6px) !important;
+  padding:18% 9% 18% 26% !important;
+}
+html.layout-portrait .hotspot[data-spot="5"] .tag{
+  padding:18% 26% 18% 9% !important;
+}
+html.layout-portrait .hotspot .badge{
+  font-size:clamp(6.6px, 1.54vw, 8.3px) !important;
+}
 
-  @keyframes bob{
-    0%,100%{ transform:translateY(0);}
-    50%{ transform:translateY(-4px);}
-  }
+@keyframes bob-mobile{
+  0%,100%{ transform:translateY(0);}
+  50%{ transform:translateY(-4px);}
+}
+html.layout-portrait .hotspot-inner{
+  animation-name:bob-mobile;
 }
 
 @media (prefers-reduced-motion: reduce){
@@ -1388,9 +1417,15 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
 
     const top = cfg.topbar || {};
     const mob = cfg.mobile || {};
-    // Orientation is the sole signal — must match island-scene.js's isMobileViewport()
-    // so a landscape phone (even a narrow one) always gets the desktop chrome, scaled down.
-    const isMobile = window.innerHeight > window.innerWidth;
+    // Same signal as island-scene.js / early head script (visualViewport + height vs width).
+    const vv = window.visualViewport;
+    const vw = vv && vv.width > 0 ? vv.width : window.innerWidth;
+    const vh = vv && vv.height > 0 ? vv.height : window.innerHeight;
+    const isMobile = Math.abs(vw - vh) < 12
+      ? window.matchMedia('(orientation: portrait)').matches
+      : vh > vw;
+    root.classList.toggle('layout-portrait', isMobile);
+    root.classList.toggle('layout-landscape', !isMobile);
 
     root.style.setProperty('--topbar-pad-y', `${isMobile ? (mob.topbarPadY ?? 10) : (top.paddingY ?? 18)}px`);
     root.style.setProperty('--topbar-pad-x', `${isMobile ? (mob.topbarPadX ?? 12) : (top.paddingX ?? 26)}px`);
