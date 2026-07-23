@@ -1,7 +1,7 @@
 {
   "artWidth": 1920,
   "artHeight": 960,
-  "notes": "Scene art from chops_004. Edit x,y,w,h,scale per prop. Reload page after save. scale 1 = native.",
+  "notes": "Desktop scene layers. Edit x,y,w,h,scale per prop. Reload page after save. scale 1 = native.",
   "viewZoom": 1,
   "landmarkGrow": 1.2,
   "layers": {

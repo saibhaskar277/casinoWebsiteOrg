@@ -1,7 +1,7 @@
 {
   "artWidth": 1080,
   "artHeight": 1920,
-  "notes": "Portrait mobile scene. Positions tuned to web banner mobile version.jpg. Edit x,y,w,h,scale per prop. Reload after save.",
+  "notes": "Portrait mobile scene. Edit x,y,w,h,scale per prop. Reload after save.",
   "viewZoom": 1,
   "landmarkGrow": 1,
   "layers": {
