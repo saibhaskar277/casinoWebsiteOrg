@@ -219,10 +219,8 @@
   let currentDesktop = DESKTOPS[0];
   let landscape = false;
 
-  // Clear leftover locks from older preview builds.
   try {
     sessionStorage.removeItem('ti-dev-viewport');
-    sessionStorage.removeItem('ti-force-layout');
   } catch (_) { /* ignore */ }
 
   PHONES.forEach((d, i) => {
@@ -253,7 +251,8 @@
   }
 
   function previewSrc() {
-    return `index.html?dev=1&nocache=${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const layout = mode === 'mobile' ? 'mobile=1' : 'desktop=1';
+    return `index.html?dev=1&${layout}&nocache=${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   async function hardReloadPreview() {
@@ -263,7 +262,8 @@
         await Promise.all(keys.map((k) => caches.delete(k)));
       }
     } catch (_) { /* ignore */ }
-    // Drop the old document completely, then load a fresh cache-busted URL.
+    // Size first, then drop the old document and load a cache-busted URL.
+    applySize();
     iframe.src = 'about:blank';
     requestAnimationFrame(() => {
       iframe.src = previewSrc();
@@ -273,6 +273,9 @@
   function setMode(next) {
     mode = next;
     const isMobile = mode === 'mobile';
+    try {
+      sessionStorage.setItem('ti-force-layout', isMobile ? 'mobile' : 'desktop');
+    } catch (_) { /* ignore */ }
     modeMobileBtn.classList.toggle('active', isMobile);
     modePcBtn.classList.toggle('active', !isMobile);
     document.querySelectorAll('.mobile-only').forEach((el) => {
@@ -287,8 +290,9 @@
     hintEl.innerHTML = isMobile
       ? 'Separate mobile layout (<code>layout.mobile.json</code>). Tune flags here for phones — independent from PC. Hit Reload after edits.'
       : 'Separate PC layout (<code>layout.json</code>). Match Normal uses this window size. Mobile mode is a different scene.';
-    iframe.src = previewSrc();
+    // Size the iframe before navigation so loadConfigs never sees a landscape default.
     applySize();
+    iframe.src = previewSrc();
   }
 
   function applySize() {

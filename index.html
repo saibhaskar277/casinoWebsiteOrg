@@ -1683,7 +1683,10 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closePanel();
     document.body.classList.add('show-dev-link');
     try {
       sessionStorage.removeItem('ti-dev-viewport');
-      sessionStorage.removeItem('ti-force-layout');
+      // Keep ti-force-layout when opened from mobile-dev.html; clear only on top-level normal view.
+      if (!/[?&](?:mobile|desktop|view)=/.test(location.search)) {
+        sessionStorage.removeItem('ti-force-layout');
+      }
     } catch (_) { /* ignore */ }
   }
 })();

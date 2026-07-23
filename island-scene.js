@@ -58,6 +58,18 @@
   }
 
   function isMobileViewport() {
+    // Dev preview (mobile-dev.html) forces the portrait/desktop scene via query
+    // or sessionStorage so layout.mobile.json edits always load — not the PC scene.
+    try {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('mobile') === '1' || q.get('view') === 'mobile') return true;
+      if (q.get('desktop') === '1' || q.get('view') === 'desktop') return false;
+      const locked = sessionStorage.getItem('ti-force-layout');
+      if (locked === 'mobile') return true;
+      if (locked === 'desktop') return false;
+    } catch (_) {
+      /* ignore */
+    }
     const { w, h } = viewportSize();
     if (Math.abs(w - h) < 12) {
       return window.matchMedia('(orientation: portrait)').matches;
@@ -1174,23 +1186,6 @@
       propMeshes.fortWaves.position.z = propMeshes.fort.position.z + 0.4;
       propMeshes.fortWaves.userData.basePos = propMeshes.fortWaves.position.clone();
     }
-    // Parent flags to landmarks so aspect-correction / viewport stretch cannot
-    // pull them off the mast (same look in Dev preview and on GitHub Pages).
-    [
-      ['flagShip', 'ship'],
-      ['flagVillage', 'village'],
-      ['flagFort', 'fort'],
-    ].forEach(([flagId, parentId]) => {
-      const flag = propMeshes[flagId];
-      const parent = propMeshes[parentId];
-      if (!flag || !parent) return;
-      const localX = flag.position.x - parent.position.x;
-      const localY = flag.position.y - parent.position.y;
-      parent.add(flag);
-      flag.position.set(localX, localY, 0.2);
-      flag.userData.basePos = flag.position.clone();
-      flag.userData.parentedLandmark = parentId;
-    });
 
     // Soft waterline shadow grounds the ship without darkening its artwork.
     if (shipMesh) {
@@ -1223,7 +1218,26 @@
       artRoot.add(shipShadow);
     }
 
+    // Landmark grow must be applied before parenting flags — otherwise the mast
+    // offset is computed at scale 1 and then stretched when the ship grows.
     syncLandmarkAspect();
+
+    // Parent flags with attach() so world mast placement is preserved under the
+    // scaled landmark (same look in Dev preview and on GitHub Pages).
+    [
+      ['flagShip', 'ship'],
+      ['flagVillage', 'village'],
+      ['flagFort', 'fort'],
+    ].forEach(([flagId, parentId]) => {
+      const flag = propMeshes[flagId];
+      const parent = propMeshes[parentId];
+      if (!flag || !parent) return;
+      parent.updateMatrixWorld(true);
+      parent.attach(flag);
+      flag.position.z = 0.2;
+      flag.userData.basePos = flag.position.clone();
+      flag.userData.parentedLandmark = parentId;
+    });
 
     // Corner foliage framing (must stay below camera.z).
     // Leaf sway is vertex-warped (upper/outer only); rocks stay planted.
@@ -1400,9 +1414,17 @@
 
     // Swapping between the desktop (1920x960) and portrait (1080x1920) scenes
     // needs a full rebuild — reload once when the viewport crosses the boundary.
+    // Skip when layout is forced from the dev preview.
     let reloadingForBreakpoint = false;
     window.addEventListener('resize', () => {
       if (reloadingForBreakpoint || isBrowserZoomed()) return;
+      try {
+        if (sessionStorage.getItem('ti-force-layout')) return;
+        const q = new URLSearchParams(window.location.search);
+        if (q.get('mobile') || q.get('desktop') || q.get('view')) return;
+      } catch (_) {
+        /* ignore */
+      }
       if (isMobileViewport() !== usingMobileScene) {
         reloadingForBreakpoint = true;
         window.location.reload();
@@ -1557,16 +1579,7 @@
           propMeshes.wake.position.y = wb.y + heave * 0.0015;
           if (wakeMat) wakeMat.userData.uSwell.value = heave;
         }
-        if (propMeshes.flagShip) {
-          // Flag is parented to the ship — basePos is the local mast offset.
-          const fb = propMeshes.flagShip.userData.basePos;
-          const theta = roll * 0.02;
-          const dx = fb.x;
-          const dy = fb.y;
-          propMeshes.flagShip.position.x = dx - theta * dy;
-          propMeshes.flagShip.position.y = dy + theta * dx;
-          propMeshes.flagShip.rotation.z = theta;
-        }
+        // flagShip is parented to the ship — roll/heave/surge carry it with the mast.
       }
       for (let i = 0; i < waveMats.length; i++) {
         waveMats[i].userData.uTime.value = t;
