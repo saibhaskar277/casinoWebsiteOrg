@@ -69,7 +69,7 @@ window.__ASSET_BUST__ = (function () {
   --panel-bg:#FFFBF0;
   --shadow: 0 12px 30px rgba(14,47,66,.25);
   --title-img: url('assets/ui/Title%20with%20board.png');
-  --panel-width:clamp(480px, 48vw, 720px);
+  --panel-width:clamp(461px, 46.1vw, 691px);
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 html,body{
@@ -555,64 +555,56 @@ body.panel-open .stage{
   text-transform:uppercase;
 }
 .panel h2{
-  font-family:'Fraunces', serif;
-  font-weight:800;
-  font-size:26px;
-  color:var(--ink);
-  margin:2px 0 12px;
-  padding-right:30px;
-}
-/* Reference panel title: bold condensed Impact-like (Anton) + two-tone */
-.panel h2.casino-heading{
   font-family:'Anton', Impact, 'Arial Narrow', sans-serif;
   font-weight:400;
   font-size:clamp(34px, 7vw, 46px);
   letter-spacing:.02em;
   line-height:.95;
   text-transform:uppercase;
+  color:var(--ink);
   margin:4px 0 14px;
+  padding-right:30px;
 }
-.panel h2.casino-heading .casino-heading__a{
+.panel h2 .casino-heading__a{
   color:#0E2F42;
 }
-.panel h2.casino-heading .casino-heading__b{
+.panel h2 .casino-heading__b{
   color:#E8A820;
   -webkit-text-stroke:0.5px rgba(14,47,66,.15);
 }
 .panel p.lead{
-  font-size:14.5px;
-  line-height:1.6;
-  color:#3B5A6B;
-  margin-bottom:22px;
-}
-.panel[data-panel="1"] p.lead{
   font-family:'Anton', Impact, 'Arial Narrow', sans-serif;
   font-weight:400;
   font-size:15px;
   letter-spacing:.02em;
   line-height:1.45;
+  color:#3B5A6B;
   margin-bottom:16px;
   text-transform:none;
 }
-.panel[data-panel="1"] .panel-eyebrow .cat,
-.panel[data-panel="1"] .section-label{
+.panel .panel-eyebrow .cat,
+.panel .section-label{
   font-family:'Anton', Impact, 'Arial Narrow', sans-serif;
   font-weight:400;
   letter-spacing:.12em;
 }
-.panel[data-panel="1"] .stat-card .label,
-.panel[data-panel="1"] .stat-card .val,
-.panel[data-panel="1"] .check-list li,
-.panel[data-panel="1"] .cta-btn{
+.panel .stat-card .label,
+.panel .stat-card .val,
+.panel .check-list li,
+.panel .cta-btn,
+.panel .chip,
+.panel .team-name,
+.panel .team-role,
+.panel .portfolio-card .name{
   font-family:'Anton', Impact, 'Arial Narrow', sans-serif;
   font-weight:400;
   letter-spacing:.04em;
 }
-.panel[data-panel="1"] .check-list li{
+.panel .check-list li{
   letter-spacing:.02em;
   text-transform:none;
 }
-.panel[data-panel="1"] .cta-btn{
+.panel .cta-btn{
   letter-spacing:.08em;
   text-transform:uppercase;
 }
@@ -1034,34 +1026,7 @@ html.layout-portrait .stat-grid{
 html.layout-portrait .chip-grid{
   grid-template-columns:repeat(2, minmax(0, 1fr));
 }
-/* Phone landscape: side panel min-width was blowing past the screen. */
-html.layout-landscape{
-  --panel-width:min(100%, 520px);
-}
-@media (max-height: 520px), (max-width: 900px){
-  html.layout-landscape{
-    --panel-width:100%;
-  }
-  html.layout-landscape .panel{
-    width:100%;
-    max-width:100%;
-    left:0;
-    right:0;
-    padding:14px 14px 36px;
-    padding-top:calc(14px + env(safe-area-inset-top, 0px));
-    padding-bottom:calc(36px + env(safe-area-inset-bottom, 0px));
-  }
-  html.layout-landscape .panel-close{
-    top:calc(10px + env(safe-area-inset-top, 0px));
-    right:calc(10px + env(safe-area-inset-right, 0px));
-  }
-  html.layout-landscape .game-grid,
-  html.layout-landscape .casino-cat-row,
-  html.layout-landscape .stat-grid,
-  html.layout-landscape .chip-grid{
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-  }
-}
+/* Phone landscape uses the PC side panel (same --panel-width as desktop). */
 html.layout-portrait .overlay{
   background:rgba(14,47,66,.2);
 }
@@ -1332,7 +1297,6 @@ const content = {
   1: {
     cat: "Chapter One",
     title: `<span class="casino-heading__a">Casino</span> <span class="casino-heading__b">Games</span>`,
-    titleClass: "casino-heading",
     lead: "We build engaging, mathematically balanced casino games for industry-leading operators and platforms — slots, table games, crash, bingo, and custom builds across Web, Mobile, and EGMs.",
     body: `
       <div class="section-label">Categories</div>
@@ -1372,6 +1336,14 @@ const content = {
           <img class="thumb" src="assets/thumbnail/einstant_snake%20and%20ladder.jpg" alt="">
           <div class="name">Snake &amp; Ladder</div>
         </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/CHEERY%20BLOSSOM-01.jpg" alt="">
+          <div class="name">Cherry Blossom</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/bubble%20shoot%20game.jpg" alt="">
+          <div class="name">Bubble Shoot</div>
+        </div>
       </div>
       <div class="section-label">Our Maths Capability</div>
       <div class="stat-grid">
@@ -1391,7 +1363,7 @@ const content = {
   },
   2: {
     cat: "Chapter Two",
-    title: "Casual &amp; Hyper Casual Games",
+    title: `<span class="casino-heading__a">Casual &amp; Hyper</span> <span class="casino-heading__b">Casual Games</span>`,
     lead: "Quick to learn, hard to put down. We design casual and hyper-casual titles built for fast fun, strong retention, and viral reach.",
     body: `
       <div class="section-label">What We Build</div>
@@ -1416,7 +1388,7 @@ const content = {
   },
   3: {
     cat: "Chapter Three",
-    title: "About Our Team",
+    title: `<span class="casino-heading__a">About</span> <span class="casino-heading__b">Our Team</span>`,
     lead: "Quills Studios is captained by a small crew of game builders who care about craft, math and player trust in equal measure.",
     body: `
       <div class="section-label">Meet The Crew</div>
@@ -1438,7 +1410,7 @@ const content = {
   },
   4: {
     cat: "Chapter Four",
-    title: "Our Technology &amp; Services",
+    title: `<span class="casino-heading__a">Our Technology</span> <span class="casino-heading__b">&amp; Services</span>`,
     lead: "A modern, modular tech stack built to ship fast, scale across markets, and stay compliant wherever you operate.",
     body: `
       <div class="section-label">Our Stack</div>
@@ -1463,7 +1435,7 @@ const content = {
   },
   5: {
     cat: "Chapter Five",
-    title: "Our Portfolio &amp; Clients",
+    title: `<span class="casino-heading__a">Our Portfolio</span> <span class="casino-heading__b">&amp; Clients</span>`,
     lead: "A growing treasury of titles shipped with operators and partners across real-money and casual markets.",
     body: `
       <div class="section-label">Selected Work</div>

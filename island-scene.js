@@ -58,23 +58,25 @@
   }
 
   function isMobileViewport() {
-    // Dev preview (mobile-dev.html) forces the portrait/desktop scene via query
-    // or sessionStorage so layout.mobile.json edits always load — not the PC scene.
+    // Portrait → mobile scene; landscape (including phone landscape) → PC scene.
+    const { w, h } = viewportSize();
+    const portrait =
+      Math.abs(w - h) < 12
+        ? window.matchMedia('(orientation: portrait)').matches
+        : h > w;
+
+    // Dev preview can prefer a layout, but never keep the portrait scene in landscape.
     try {
       const q = new URLSearchParams(window.location.search);
-      if (q.get('mobile') === '1' || q.get('view') === 'mobile') return true;
       if (q.get('desktop') === '1' || q.get('view') === 'desktop') return false;
+      if (q.get('mobile') === '1' || q.get('view') === 'mobile') return portrait;
       const locked = sessionStorage.getItem('ti-force-layout');
-      if (locked === 'mobile') return true;
       if (locked === 'desktop') return false;
+      if (locked === 'mobile') return portrait;
     } catch (_) {
       /* ignore */
     }
-    const { w, h } = viewportSize();
-    if (Math.abs(w - h) < 12) {
-      return window.matchMedia('(orientation: portrait)').matches;
-    }
-    return h > w;
+    return portrait;
   }
 
   /** Keep CSS + JS on the same orientation signal (media queries disagree on some phones). */
@@ -1414,17 +1416,10 @@
 
     // Swapping between the desktop (1920x960) and portrait (1080x1920) scenes
     // needs a full rebuild — reload once when the viewport crosses the boundary.
-    // Skip when layout is forced from the dev preview.
+    // Phone landscape uses the PC scene (same as desktop).
     let reloadingForBreakpoint = false;
     window.addEventListener('resize', () => {
       if (reloadingForBreakpoint || isBrowserZoomed()) return;
-      try {
-        if (sessionStorage.getItem('ti-force-layout')) return;
-        const q = new URLSearchParams(window.location.search);
-        if (q.get('mobile') || q.get('desktop') || q.get('view')) return;
-      } catch (_) {
-        /* ignore */
-      }
       if (isMobileViewport() !== usingMobileScene) {
         reloadingForBreakpoint = true;
         window.location.reload();

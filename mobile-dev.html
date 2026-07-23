@@ -251,7 +251,13 @@
   }
 
   function previewSrc() {
-    const layout = mode === 'mobile' ? 'mobile=1' : 'desktop=1';
+    const { w, h } = currentSize();
+    // Portrait phone frame → mobile scene; landscape (even in Mobile mode) → PC scene.
+    const useMobile = mode === 'mobile' && h > w;
+    const layout = useMobile ? 'mobile=1' : 'desktop=1';
+    try {
+      sessionStorage.setItem('ti-force-layout', useMobile ? 'mobile' : 'desktop');
+    } catch (_) { /* ignore */ }
     return `index.html?dev=1&${layout}&nocache=${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
@@ -331,6 +337,7 @@
   rotateBtn.addEventListener('click', () => {
     landscape = !landscape;
     applySize();
+    hardReloadPreview();
   });
   reloadBtn.title = 'Hard-reload: clear caches + refetch layout, JS, and art';
   reloadBtn.addEventListener('click', () => {
