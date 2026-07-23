@@ -44,15 +44,16 @@
     });
 
   /**
-   * Portrait viewports get the dedicated 1080x1920 scene; landscape always
-   * uses the desktop 1920x960 scene (uniformly scaled), regardless of width.
-   * Prefer visualViewport so mobile browser chrome doesn't flip the decision.
+   * Portrait → mobile scene; landscape → desktop scene.
+   * Always use the layout viewport — never visualViewport while zoomed,
+   * or pinch-zoom reflows hotspots/camera as if the screen resized.
    */
-  function viewportSize() {
+  function isBrowserZoomed() {
     const vv = window.visualViewport;
-    if (vv && vv.width > 0 && vv.height > 0) {
-      return { w: vv.width, h: vv.height };
-    }
+    return !!(vv && Math.abs(vv.scale - 1) > 0.02);
+  }
+
+  function viewportSize() {
     return { w: window.innerWidth, h: window.innerHeight };
   }
 
@@ -1389,6 +1390,8 @@
     updateRoute();
 
     const onViewportChange = () => {
+      // Pinch-zoom fires resize with a shrunk visual viewport — ignore so layout stays put.
+      if (isBrowserZoomed()) return;
       resize();
       positionHotspots();
       updateRoute();
@@ -1399,7 +1402,7 @@
     // needs a full rebuild — reload once when the viewport crosses the boundary.
     let reloadingForBreakpoint = false;
     window.addEventListener('resize', () => {
-      if (reloadingForBreakpoint) return;
+      if (reloadingForBreakpoint || isBrowserZoomed()) return;
       if (isMobileViewport() !== usingMobileScene) {
         reloadingForBreakpoint = true;
         window.location.reload();
@@ -1407,6 +1410,7 @@
     });
     if ('ResizeObserver' in window) {
       const stageObserver = new ResizeObserver(() => {
+        if (isBrowserZoomed()) return;
         resize();
         positionHotspots();
         updateRoute();
