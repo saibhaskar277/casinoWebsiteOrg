@@ -835,7 +835,7 @@ body.panel-open .stage{
 /* Casino category tiles — bold condensed labels like the reference */
 .casino-cat-row{
   display:grid;
-  grid-template-columns:repeat(3, 1fr);
+  grid-template-columns:repeat(2, 1fr);
   gap:10px;
   margin-top:4px;
 }
@@ -1264,17 +1264,13 @@ const content = {
   1: {
     cat: "Chapter One",
     title: `<span class="casino-heading__a">Casino</span> <span class="casino-heading__b">Games</span>`,
-    lead: "We build engaging, mathematically balanced casino games for industry-leading operators and platforms — slots, table games, crash, bingo, and custom builds across Web, Mobile, and EGMs.",
+    lead: "We build engaging, mathematically balanced casino games for industry-leading operators and platforms — slots and custom builds across Web, Mobile, and EGMs.",
     body: `
       <div class="section-label">Categories</div>
       <div class="casino-cat-row">
         <div class="casino-cat-card">
-          <img src="assets/thumbnail/crash%20game.jpg" alt="" loading="lazy" decoding="async">
-          <span>Crash Games</span>
-        </div>
-        <div class="casino-cat-card">
-          <img src="assets/thumbnail/einstant_game.jpg" alt="" loading="lazy" decoding="async">
-          <span>E-Instant Games</span>
+          <img src="assets/thumbnail/slot%20game/bandith_s%20Bounty.jpg" alt="" loading="lazy" decoding="async">
+          <span>Slot Games</span>
         </div>
         <div class="casino-cat-card">
           <img src="assets/thumbnail/custom%20build.jpg" alt="" loading="lazy" decoding="async">
@@ -1284,32 +1280,20 @@ const content = {
       <div class="section-label">Game Previews</div>
       <div class="game-grid">
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/bandith_s%20Bounty.jpg" alt="">
+          <img class="thumb" src="assets/thumbnail/slot%20game/bandith_s%20Bounty.jpg" alt="">
           <div class="name">Bandit's Bounty</div>
         </div>
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/secrets%20of%20the%20lamp.jpg" alt="">
+          <img class="thumb" src="assets/thumbnail/slot%20game/secrets%20of%20the%20lamp.jpg" alt="">
           <div class="name">Secrets of the Lamp</div>
         </div>
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/Pirates%20fortune.jpg" alt="">
+          <img class="thumb" src="assets/thumbnail/slot%20game/Pirates%20fortune.jpg" alt="">
           <div class="name">Pirate's Fortune</div>
         </div>
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/crash%20game.jpg" alt="">
-          <div class="name">Crash Gold</div>
-        </div>
-        <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/einstant_snake%20and%20ladder.jpg" alt="">
-          <div class="name">Snake &amp; Ladder</div>
-        </div>
-        <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/CHEERY%20BLOSSOM-01.jpg" alt="">
+          <img class="thumb" src="assets/thumbnail/slot%20game/CHEERY%20BLOSSOM-01.jpg" alt="">
           <div class="name">Cherry Blossom</div>
-        </div>
-        <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/bubble%20shoot%20game.jpg" alt="">
-          <div class="name">Bubble Shoot</div>
         </div>
       </div>
       <div class="section-label">Our Maths Capability</div>
@@ -1334,13 +1318,39 @@ const content = {
     lead: "Quick to learn, hard to put down. We design casual and hyper-casual titles built for fast fun, strong retention, and viral reach.",
     body: `
       <div class="section-label">What We Build</div>
-      <div class="chip-grid">
-        <div class="chip"><span class="ic">🧠</span>Puzzle</div>
-        <div class="chip"><span class="ic">🏃</span>Arcade</div>
-        <div class="chip"><span class="ic">🎯</span>Idle &amp; Merge</div>
-        <div class="chip"><span class="ic">🎮</span>Mini Games</div>
-        <div class="chip"><span class="ic">🏆</span>Leaderboards</div>
-        <div class="chip"><span class="ic">🎁</span>Rewarded Ads</div>
+      <div class="section-label">Casual Games</div>
+      <div class="game-grid">
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/Archery%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Archery</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/bubble%20shoot%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Bubble Shoot</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/HexagonFight.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Hexagon Fight</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/Infantry%20Push%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Infantry Push</div>
+        </div>
+      </div>
+      <div class="section-label">E-Instant Games</div>
+      <div class="game-grid">
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/e%20instant%20game/crash%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Crash Gold</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/e%20instant%20game/Snake%20and%20ladder%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Snake &amp; Ladder</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/e%20instant%20game/Tetris%20Game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Tetris</div>
+        </div>
       </div>
       <div class="section-label">Why Studios Choose Us</div>
       <ul class="check-list">
@@ -1406,22 +1416,57 @@ const content = {
     lead: "A growing treasury of titles shipped with operators and partners across real-money and casual markets.",
     body: `
       <div class="section-label">Selected Work</div>
+      <div class="section-label">Slot Games</div>
       <div class="game-grid">
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/bandith_s%20Bounty.jpg" alt="" loading="lazy" decoding="async">
+          <img class="thumb" src="assets/thumbnail/slot%20game/bandith_s%20Bounty.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Bandit's Bounty</div>
         </div>
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/secrets%20of%20the%20lamp.jpg" alt="" loading="lazy" decoding="async">
+          <img class="thumb" src="assets/thumbnail/slot%20game/secrets%20of%20the%20lamp.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Secrets of the Lamp</div>
         </div>
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/Pirates%20fortune.jpg" alt="" loading="lazy" decoding="async">
+          <img class="thumb" src="assets/thumbnail/slot%20game/Pirates%20fortune.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Pirate's Fortune</div>
         </div>
         <div class="game-card">
-          <img class="thumb" src="assets/thumbnail/crash%20game.jpg" alt="" loading="lazy" decoding="async">
+          <img class="thumb" src="assets/thumbnail/slot%20game/CHEERY%20BLOSSOM-01.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Cherry Blossom</div>
+        </div>
+      </div>
+      <div class="section-label">Casual Games</div>
+      <div class="game-grid">
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/Archery%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Archery</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/bubble%20shoot%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Bubble Shoot</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/HexagonFight.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Hexagon Fight</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/casual%20game/Infantry%20Push%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Infantry Push</div>
+        </div>
+      </div>
+      <div class="section-label">E-Instant Games</div>
+      <div class="game-grid">
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/e%20instant%20game/crash%20game.jpg" alt="" loading="lazy" decoding="async">
           <div class="name">Crash Gold</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/e%20instant%20game/Snake%20and%20ladder%20game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Snake &amp; Ladder</div>
+        </div>
+        <div class="game-card">
+          <img class="thumb" src="assets/thumbnail/e%20instant%20game/Tetris%20Game.jpg" alt="" loading="lazy" decoding="async">
+          <div class="name">Tetris</div>
         </div>
       </div>
       <div class="section-label">Trusted By</div>
