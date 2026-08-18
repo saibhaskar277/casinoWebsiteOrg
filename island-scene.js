@@ -1,5 +1,5 @@
 /**
- * Quills Studios — Treasure Island scene
+ * Netty Brains — Treasure Island scene
  * Composites assets/scene layers using layout.json.
  */
 (function () {

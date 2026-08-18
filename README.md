@@ -1,4 +1,4 @@
-# Quills Studios — Treasure Island
+# Netty Brains — Treasure Island
 
 Static WebGL landing page (`index.html` + `island-scene.js`).
 
