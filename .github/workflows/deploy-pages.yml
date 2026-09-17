@@ -1,6 +1,5 @@
-# Deploy static site to GitHub Pages.
-# Works on github.io and any custom domain you attach later in repo Settings → Pages.
-name: Deploy GitHub Pages
+# GitHub Pages now only redirects to Firebase Hosting.
+name: Deploy GitHub Pages redirect
 
 on:
   push:
@@ -26,19 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare site bundle
+      - name: Prepare redirect
         run: |
-          REV="$(git rev-parse --short HEAD)"
           mkdir -p _site
-          cp index.html island-scene.js casino-hero.js _site/
-          cp -r assets _site/assets
+          cp pages-redirect.html _site/index.html
           if [ -f CNAME ]; then cp CNAME _site/CNAME; fi
-          # Bust browser/CDN cache on every deploy (HTML + all scene scripts).
-          sed -i "s/__DEPLOY_REV__/${REV}/g" _site/index.html _site/island-scene.js _site/casino-hero.js
-          rm -f _site/assets/scene/web-layout.jpg \
-                _site/assets/ui/web-layout.jpg
-          echo "${REV} $(date -u +%Y-%m-%dT%H:%M:%SZ)" > _site/deploy-rev.txt
-          echo "Deploy rev ${REV}"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

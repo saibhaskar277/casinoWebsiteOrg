@@ -1,0 +1,35 @@
+{
+  "enabled": true,
+  "features": {
+    "booking": true,
+    "openSitePanelTool": true
+  },
+  "llm": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "maxTokens": 280,
+    "temperature": 0.55,
+    "historyMessages": 4,
+    "maxToolRounds": 3,
+    "maxMessageChars": 700
+  },
+  "calendar": {
+    "calendarId": "sai.bhaskar277@gmail.com",
+    "timezone": "Asia/Kolkata",
+    "businessStartHour": 10,
+    "businessEndHour": 18,
+    "meetingDurationMinutes": 30,
+    "maxSlotsReturned": 5
+  },
+  "corsOrigins": [
+    "https://nettybrain.com",
+    "https://www.nettybrain.com",
+    "https://nettybrainswebsite.web.app",
+    "https://nettybrainswebsite.firebaseapp.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ],
+  "brand": {
+    "assistantName": "Netty Brains guide"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "api": {
+    "chatUrl": "/api/chat",
+    "localChatUrl": "http://127.0.0.1:8787/api/chat"
+  },
+  "features": {
+    "voice": true,
+    "booking": true
+  },
+  "voice": {
+    "lang": "en-IN",
+    "autoSpeak": true
+  },
+  "ui": {
+    "welcomeMessage": "Hi! I’m Netty Brains’ guide. Ask about our games, tech, or book a meeting.",
+    "privacyNote": "🎙️ Speak to type. 🔊 reads AI replies aloud (on by default). Voice stays in your browser; chat text goes to our assistant.",
+    "starterPrompts": [
+      "Show casino games",
+      "Show e-instant / casual games",
+      "I want to book a meeting"
+    ]
+  },
+  "branding": {
+    "mascotAsset": "./assets/netty-bot.svg"
+  }
+}

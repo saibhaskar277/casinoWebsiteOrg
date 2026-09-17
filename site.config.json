@@ -1,11 +1,13 @@
 {
   "name": "Netty Brains",
   "description": "Treasure Island marketing site",
-  "defaultPagesUrl": "https://saibhaskar277.github.io/casinoWebsiteOrg/",
-  "customDomain": "",
+  "defaultPagesUrl": "https://nettybrainswebsite.web.app/",
+  "githubPagesRedirect": "https://saibhaskar277.github.io/casinoWebsiteOrg/",
+  "customDomain": "https://nettybrain.com/",
   "notes": [
-    "Asset paths are relative so the same build works on github.io/repo and on a root custom domain.",
-    "To attach a domain later: set customDomain below, create a CNAME file with that domain, commit, then in GitHub → Settings → Pages → Custom domain enter the same value and enable HTTPS.",
-    "DNS: apex → A records 185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153; www → CNAME to saibhaskar277.github.io"
+    "Live site is Firebase Hosting (project nettybrainswebsite).",
+    "GitHub Pages only redirects to the Firebase URL.",
+    "Asset paths are relative so the same build works on web.app and on a custom domain.",
+    "To attach a domain: Firebase console → Hosting → Add custom domain."
   ]
 }

@@ -1,0 +1,80 @@
+{
+  "brandName": "Netty Brains",
+  "navigator": {
+    "type": "domOpenPanel",
+    "options": {
+      "openGlobal": "openPanel",
+      "closeGlobal": "closePanel",
+      "panelElementId": "panel",
+      "panelIdDataset": "panel"
+    }
+  },
+  "greetings": {
+    "hello": "Hi! I’m Netty Brains’ guide. Ask about our games, tech, or book a meeting — or tap a suggestion below.",
+    "welcomeBack": "Welcome back! Want to pick up where we left off — casino games, e-instant / casual, or book a meeting?"
+  },
+  "defaultFollowUps": [
+    "Show casino games",
+    "Show e-instant / casual games",
+    "Tell me about your technology",
+    "Book a meeting"
+  ],
+  "bookingSkipPatterns": ["book", "booking", "meeting", "calendar", "schedule", "availability"],
+  "sections": [
+    {
+      "id": 1,
+      "key": "casino",
+      "title": "Casino Games",
+      "blurb": "Here’s our Casino Games section — slots and custom builds for Web, Mobile, and EGMs, with strong math and certification focus.",
+      "detail": "On this page: casino slots & custom builds for Web, Mobile, and EGMs — math, RTP, and certification-ready.",
+      "patterns": ["casino", "slot", "rtp", "egli", "egm", "real-money", "real money"],
+      "followUps": [
+        "What’s different about e-instant?",
+        "Tell me about your math / RTP",
+        "Show casual games",
+        "I want to book a meeting"
+      ]
+    },
+    {
+      "id": 2,
+      "key": "casual",
+      "title": "Casual & Hyper-Casual",
+      "blurb": "Here’s Casual & Hyper-Casual — quick-to-learn games built for retention, plus our e-instant style titles.",
+      "detail": "On this page: casual / hyper-casual and e-instant titles — fast to learn, built for retention and sessions.",
+      "patterns": ["casual", "hyper-casual", "hyper casual", "e-instant", "einstant", "arcade", "bubble shoot", "archery"],
+      "followUps": [
+        "What’s different about e-instant?",
+        "Tell me about casino math / RTP",
+        "Show casino games",
+        "Book a meeting"
+      ]
+    },
+    {
+      "id": 3,
+      "key": "team",
+      "title": "About Our Team",
+      "blurb": "Here’s the crew behind Netty Brains — a small studio focused on craft, math, and player trust.",
+      "detail": "On this page: the Netty Brains crew — a small studio focused on craft, math, and player trust.",
+      "patterns": ["team", "crew", "founder", "pavan", "shrikanth"],
+      "followUps": ["Tell me about your tech stack", "Show casino games", "Book a meeting"]
+    },
+    {
+      "id": 4,
+      "key": "tech",
+      "title": "Technology & Services",
+      "blurb": "Here’s our Technology & Services — Unity/HTML5, RGS & math, integrations, compliance, and LiveOps support.",
+      "detail": "On this page: Unity/HTML5, RGS & math, integrations, compliance, and LiveOps support.",
+      "patterns": ["technology", "tech", "stack", "services", "unity", "integration", "compliance"],
+      "followUps": ["Tell me about casino games", "Show casual games", "Book a meeting"]
+    },
+    {
+      "id": 5,
+      "key": "portfolio",
+      "title": "Portfolio & Clients",
+      "blurb": "Here’s our Portfolio — selected casino, casual, and e-instant work.",
+      "detail": "On this page: selected portfolio work across casino, casual, and e-instant.",
+      "patterns": ["portfolio", "clients", "case study", "selected work"],
+      "followUps": ["Tell me about casino games", "Show casual games", "Book a meeting"]
+    }
+  ]
+}

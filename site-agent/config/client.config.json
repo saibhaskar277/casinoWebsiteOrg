@@ -1,0 +1,34 @@
+{
+  "enabled": true,
+  "basePath": "/site-agent/client",
+  "api": {
+    "chatUrl": "/api/chat",
+    "localChatPort": 8787
+  },
+  "features": {
+    "voice": true,
+    "booking": true,
+    "siteNavigation": true
+  },
+  "voice": {
+    "lang": "en-IN",
+    "autoSpeak": true
+  },
+  "ui": {
+    "privacyNote": "🎙️ Speak to type. 🔊 reads AI replies aloud (on by default). Voice stays in your browser; chat text goes to our assistant.",
+    "starterPrompts": [
+      "Show casino games",
+      "Show e-instant / casual games",
+      "I want to book a meeting"
+    ]
+  },
+  "branding": {
+    "title": "Netty Brains",
+    "mascotAsset": "assets/netty-bot.svg"
+  },
+  "storageKeys": {
+    "sessionId": "site-agent-session-id",
+    "speaker": "site-agent-speaker-on",
+    "greeted": "site-agent-panel-opened"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "site-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portable website AI agent (LLM chat + optional calendar + optional site navigation)",
+  "main": "server/index.js",
+  "exports": {
+    ".": "./server/index.js",
+    "./server": "./server/index.js",
+    "./config/server.config.json": "./config/server.config.json"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "googleapis": "^140.0.0",
+    "luxon": "^3.5.0"
+  }
+}

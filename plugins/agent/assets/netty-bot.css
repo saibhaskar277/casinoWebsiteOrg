@@ -1,0 +1,421 @@
+:root{
+  --netty-bot-ink:#0E2F42;
+  --netty-bot-panel:#FFFBF0;
+  --netty-bot-accent:#F2A93B;
+  --netty-bot-accent2:#FF6B4A;
+  --netty-bot-shadow: 0 18px 40px rgba(14,47,66,.28);
+  --netty-agent-header-h: 56px;
+}
+
+.netty-agent-root{
+  position:fixed;
+  left:max(12px, env(safe-area-inset-left));
+  right:auto;
+  bottom:max(56px, calc(12px + env(safe-area-inset-bottom)));
+  z-index:12000;
+  font-family:'Nunito', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  pointer-events:none;
+}
+.netty-agent-root > *{
+  pointer-events:auto;
+}
+
+.netty-agent-toggle{
+  width:56px;
+  height:56px;
+  border-radius:16px;
+  border:2px solid rgba(242,169,59,.85);
+  background:linear-gradient(145deg, rgba(23,48,64,.96), rgba(14,47,66,.92));
+  box-shadow:0 12px 28px rgba(14,47,66,.38), 0 0 0 3px rgba(242,169,59,.16);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  user-select:none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.netty-agent-toggle.is-open{
+  border-color: rgba(255,107,74,.9);
+  box-shadow:0 12px 28px rgba(14,47,66,.42), 0 0 0 3px rgba(255,107,74,.2);
+  transform: scale(0.96);
+}
+.netty-agent-toggle:focus-visible{
+  outline:2px solid rgba(242,169,59,.65);
+  outline-offset:2px;
+}
+
+.netty-agent-widget{
+  position:absolute;
+  left:0;
+  right:auto;
+  bottom:calc(56px + 10px);
+  width:min(240px, calc(100vw - 24px));
+  height:min(420px, calc(100dvh - 140px));
+  max-height:calc(100dvh - 120px);
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.22);
+  background:linear-gradient(180deg, rgba(255,251,240,.99), rgba(255,251,240,.94));
+  box-shadow:var(--netty-bot-shadow);
+  transform-origin:bottom left;
+  display:none;
+  flex-direction:column;
+  min-height:0;
+}
+.netty-agent-widget.open{
+  display:flex;
+}
+
+.netty-agent-header{
+  flex:0 0 auto;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:10px 12px;
+  min-height:var(--netty-agent-header-h);
+  box-sizing:border-box;
+  background:linear-gradient(135deg, rgba(242,169,59,.16), rgba(255,107,74,.12));
+  border-bottom:1px solid rgba(14,47,66,.12);
+}
+.netty-agent-header-text{
+  min-width:0;
+  flex:1;
+}
+.netty-agent-title{
+  font-weight:900;
+  color:var(--netty-bot-ink);
+  font-size:14px;
+  line-height:1.2;
+}
+.netty-agent-subtitle{
+  margin-top:2px;
+  font-size:11px;
+  color:rgba(14,47,66,.65);
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.netty-agent-actions{
+  margin-left:auto;
+  display:flex;
+  gap:6px;
+  flex:0 0 auto;
+}
+.netty-agent-btn{
+  border:1px solid rgba(14,47,66,.14);
+  background:rgba(255,255,255,.65);
+  border-radius:12px;
+  padding:7px 9px;
+  cursor:pointer;
+  font-weight:800;
+  color:rgba(14,47,66,.82);
+}
+.netty-agent-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.netty-agent-btn.is-on{
+  border-color: rgba(242,169,59,.55);
+  background: rgba(242,169,59,.18);
+}
+
+/* Main column: messages scroll; footer stays pinned */
+.netty-agent-body{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.netty-agent-messages{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:12px 12px 8px;
+  scroll-behavior:smooth;
+}
+
+.netty-agent-msg{
+  margin-bottom:10px;
+  display:flex;
+}
+.netty-agent-msg.user{
+  justify-content:flex-end;
+}
+.netty-agent-bubble{
+  max-width: 88%;
+  border-radius:14px;
+  padding:9px 10px;
+  border:1px solid rgba(14,47,66,.10);
+  background:#fff;
+  color:var(--netty-bot-ink);
+  box-shadow: 0 8px 18px rgba(14,47,66,.06);
+  font-size:13.5px;
+  line-height:1.4;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+}
+.netty-agent-msg.user .netty-agent-bubble{
+  background:linear-gradient(135deg, rgba(242,169,59,.22), rgba(255,107,74,.16));
+}
+.netty-agent-meta{
+  font-size:10px;
+  font-weight:800;
+  color:rgba(14,47,66,.55);
+  margin-top:6px;
+}
+
+.netty-agent-typing{
+  flex:0 0 auto;
+  display:none;
+  align-items:center;
+  gap:8px;
+  padding:4px 12px 10px;
+  color:rgba(14,47,66,.7);
+  font-weight:800;
+  font-size:12px;
+}
+.netty-agent-dots{
+  display:inline-flex;
+  gap:4px;
+}
+.netty-agent-dots span{
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:rgba(14,47,66,.35);
+  animation:bounce 1s infinite;
+}
+.netty-agent-dots span:nth-child(2){ animation-delay: .15s;}
+.netty-agent-dots span:nth-child(3){ animation-delay: .3s;}
+@keyframes bounce{
+  0%, 100%{ transform: translateY(0); opacity:.5;}
+  50%{ transform: translateY(-4px); opacity:1;}
+}
+
+.netty-agent-footer{
+  flex:0 0 auto;
+  padding:8px 12px 10px;
+  border-top:1px solid rgba(14,47,66,.12);
+  background:rgba(255,255,255,.72);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+}
+
+.netty-agent-chips-row{
+  display:flex;
+  gap:6px;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  max-height:40px;
+  padding-bottom:2px;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+.netty-agent-chips-row[hidden]{
+  display:none !important;
+}
+.netty-agent-starter,
+.netty-agent-suggestions{
+  display:contents;
+}
+.netty-agent-starter[hidden],
+.netty-agent-suggestions[hidden]{
+  display:none !important;
+}
+
+.netty-agent-voice-status{
+  font-size:11px;
+  font-weight:800;
+  color: rgba(255,107,74,.95);
+  line-height:1.3;
+}
+.netty-agent-voice-status[hidden]{
+  display:none !important;
+}
+
+.netty-agent-inputrow{
+  display:flex;
+  gap:8px;
+  align-items:flex-end;
+  min-width:0;
+}
+.netty-agent-mic{
+  width:40px;
+  height:40px;
+  flex:0 0 40px;
+  border-radius:12px;
+  border:1px solid rgba(14,47,66,.16);
+  background:rgba(255,255,255,.9);
+  cursor:pointer;
+  font-size:17px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.netty-agent-mic.is-listening{
+  border-color: rgba(255,107,74,.65);
+  background: rgba(255,107,74,.16);
+  box-shadow: 0 0 0 3px rgba(255,107,74,.18);
+  animation: micPulse 1s ease-in-out infinite;
+}
+.netty-agent-mic:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+@keyframes micPulse{
+  0%,100%{ transform: scale(1); }
+  50%{ transform: scale(1.05); }
+}
+
+.netty-agent-textarea{
+  flex:1 1 auto;
+  min-width:0;
+  min-height:40px;
+  max-height:88px;
+  resize:none;
+  border:1px solid rgba(14,47,66,.16);
+  border-radius:12px;
+  padding:10px 11px;
+  background:#fff;
+  font:700 13.5px/1.3 'Nunito', system-ui, sans-serif;
+  color:var(--netty-bot-ink);
+  box-sizing:border-box;
+}
+.netty-agent-send{
+  flex:0 0 auto;
+  border:none;
+  border-radius:12px;
+  padding:10px 12px;
+  min-height:40px;
+  cursor:pointer;
+  font-weight:900;
+  color:#0E2F42;
+  background:linear-gradient(90deg, rgba(242,169,59,.95), rgba(255,107,74,.85));
+}
+.netty-agent-privacy{
+  font-size:10px;
+  color:rgba(14,47,66,.55);
+  font-weight:700;
+  line-height:1.3;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.netty-agent-cal-link{
+  display:inline-block;
+  margin-top:8px;
+  font-size:12px;
+  font-weight:900;
+  color:rgba(14,47,66,.9);
+}
+.netty-agent-speak-msg{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-top:8px;
+  margin-right:8px;
+  border:1px solid rgba(14,47,66,.14);
+  background:rgba(242,169,59,.16);
+  border-radius:999px;
+  padding:4px 10px;
+  cursor:pointer;
+  font:800 11px/1 'Nunito', system-ui, sans-serif;
+  color:rgba(14,47,66,.9);
+}
+.netty-agent-speak-msg:hover{
+  background:rgba(242,169,59,.28);
+}
+
+.netty-agent-chip{
+  flex:0 0 auto;
+  border:1px solid rgba(14,47,66,.14);
+  background:rgba(255,255,255,.85);
+  border-radius:999px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-weight:800;
+  font-size:11.5px;
+  color:rgba(14,47,66,.82);
+  white-space:nowrap;
+}
+.netty-agent-chip-suggest{
+  border-color:rgba(242,169,59,.45);
+  background:rgba(242,169,59,.12);
+}
+.netty-agent-chip:hover{
+  background:rgba(255,255,255,.95);
+}
+.netty-agent-chip-suggest:hover{
+  background:rgba(242,169,59,.22);
+}
+
+.netty-agent-mascot{
+  width:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+}
+.netty-agent-mascot img{
+  width:36px;
+  height:36px;
+}
+.netty-agent-toggle .netty-agent-mascot,
+.netty-agent-toggle .netty-agent-mascot img{
+  width:34px;
+  height:34px;
+}
+
+.netty-agent-bob{
+  animation: nettyBob 1.4s ease-in-out infinite;
+}
+.netty-agent-bob.listening{ animation-duration: .9s; }
+.netty-agent-bob.talking{ animation-duration: .55s; }
+@keyframes nettyBob{
+  0%,100%{ transform: translateY(0); }
+  50%{ transform: translateY(-2px); }
+}
+
+@media (max-width: 480px){
+  .netty-agent-root{
+    left:8px;
+    right:auto;
+    bottom:max(48px, calc(8px + env(safe-area-inset-bottom)));
+  }
+  .netty-agent-toggle{
+    margin-right:auto;
+    margin-left:0;
+  }
+  .netty-agent-widget{
+    left:0;
+    right:auto;
+    width:min(240px, calc(100vw - 16px));
+    height:min(380px, calc(100dvh - 120px));
+    bottom:calc(56px + 8px);
+    border-radius:14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .netty-agent-dots span,
+  .netty-agent-mic.is-listening,
+  .netty-agent-bob{
+    animation:none !important;
+  }
+  .netty-agent-messages{
+    scroll-behavior:auto;
+  }
+}

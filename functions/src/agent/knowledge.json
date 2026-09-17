@@ -1,0 +1,12 @@
+{
+  "co": "Netty Brains — casino/casual/e-instant studio. ajit.r@nettybrain.com · +91 6363093107 · https://nettybrainswebsite.web.app/",
+  "svc": "Casino slots/custom (Web/Mobile/EGM); casual/hyper-casual; e-instant; LiveOps.",
+  "math": "RTP ~90–97%+; vol low–high; certs GLI/MGA/UKGC.",
+  "stack": "Unity/HTML5, RGS/math, APIs, cloud, compliance, QA.",
+  "team": "Founder (lead); Pavan (eng); Shrikanth (design/math).",
+  "titles": {
+    "casino": ["Pirate's Fortune", "Cherry Blossom"],
+    "casual": ["Archery", "Bubble Shoot", "Hexagon Fight", "Infantry Push"],
+    "eInstant": ["Crash Gold", "Snake & Ladder", "Tetris"]
+  }
+}

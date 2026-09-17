@@ -5,3 +5,19 @@ Thumbs.db
 .idea/
 __pycache__/
 *.pyc
+dist/
+.firebase/
+node_modules/
+
+# Secrets — never commit API keys or service-account JSON
+secrets/*
+!secrets/README.md
+*.pem
+gen-lang-client-*.json
+*-service-account*.json
+google-calendar-sa.json
+deepseek.key
+*.key
+.env
+.env.*
+!.env.example

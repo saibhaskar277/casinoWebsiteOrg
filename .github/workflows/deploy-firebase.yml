@@ -1,0 +1,43 @@
+# Deploy the live site to Firebase Hosting.
+name: Deploy Firebase Hosting
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare site bundle
+        run: node scripts/prepare-hosting.mjs
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@13
+
+      - name: Write service account file
+        shell: bash
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_NETTYBRAINSWEBSITE }}' > sa.json
+
+      - name: Deploy hosting + functions
+        shell: bash
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$PWD/sa.json"
+          firebase deploy --only hosting,functions --project nettybrainswebsite --non-interactive
